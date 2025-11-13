@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Logo from './layout/Logo';
 import DesktopAuthButtons from './auth/DesktopAuthButtons';
+import MobileMenu from './layout/MobileMenu';
+import MobileToggleButton from './layout/MobileToggleButton';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +27,8 @@ const Navbar = () => {
           <div className="flex items-center flex-1">
             <Logo />
           </div>
+          <MobileToggleButton isOpen={isOpen} toggle={() => setIsOpen(!isOpen)}/>
+
           <DesktopAuthButtons
             isAuthenticated={isAuthenticated}
             isOpen={isOpen}
@@ -34,6 +38,15 @@ const Navbar = () => {
             onSignupClick={onSignupClick}
           />
         </div>
+
+        <MobileMenu
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          isAuthenticated={isAuthenticated}
+          onLoginClick={onLoginClick}
+          onLogoutClick={onLogoutClick}
+          onSignupClick={onSignupClick}
+        />
       </div>
     </nav>
   );
