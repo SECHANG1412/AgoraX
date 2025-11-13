@@ -5,24 +5,17 @@ import MobileMenu from './layout/MobileMenu';
 import MobileToggleButton from './layout/MobileToggleButton';
 import Categories from './layout/Categories';
 import SearchMenu from './layout/SearchMenu';
+import { useAuth } from '../../hooks/useAuth';
 
-const Navbar = () => {
+const Navbar = ({ onLoginClick, onSignupClick }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const isAuthenticated = false;
-
-  const onLoginClick = () => {
-    alert('로그인');
-  };
+  const { logout, isAuthenticated } = useAuth();
 
   const onLogoutClick = () => {
-    alert('로그아웃');
+    logout();
   };
 
-  const onSignupClick = () => {
-    alert('회원가입');
-  };
-
-  const onCategoryClick= (category) => {
+  const onCategoryClick = (category) => {
     alert(category);
   };
 
@@ -34,7 +27,7 @@ const Navbar = () => {
             <Logo />
             <SearchMenu />
           </div>
-          <MobileToggleButton isOpen={isOpen} toggle={() => setIsOpen(!isOpen)}/>
+          <MobileToggleButton isOpen={isOpen} toggle={() => setIsOpen(!isOpen)} />
 
           <DesktopAuthButtons
             isAuthenticated={isAuthenticated}
