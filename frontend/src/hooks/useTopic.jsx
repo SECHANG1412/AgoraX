@@ -41,9 +41,15 @@ export const useTopic = () => {
     return dummyTopics.length * 155;
   };
 
+  const addTopic = async (TopicData) => {
+    console.log(TopicData);
+    return TopicData;
+  };
+
   return {
     loading,
     fetchTopics,
     countAllTopics,
+    addTopic,
   };
 };
