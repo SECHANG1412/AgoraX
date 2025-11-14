@@ -4,6 +4,7 @@ import { useTopic } from '../../hooks/useTopic';
 import Header from './layout/Header';
 import SearchTag from './layout/SearchTag';
 import Pagination from './layout/Pagination';
+import Grid from './layout/Grid';
 
 const Main = () => {
   const { loading, fetchTopics, countAllTopics } = useTopic();
@@ -55,11 +56,16 @@ const Main = () => {
     console.log('Seach Clear');
   };
 
+  const onVote = (topic_id, index) => {
+    console.log(topic_id, index);
+  };
+
   return (
     <div className="w-full px-4 py-4 bg-white">
       <div className="max-w-8xl mx-auto">
         <Header title={titleText} total={totalTopics} sort={sort} onSortChange={onSortChange} />
         <SearchTag search={search} onClear={onSeachClear} />
+        <Grid topics={topics} loading={loading} onVote={onVote} />
         <Pagination currentPage={page} total={totalTopics} perPage={topicsPerPage} onChange={onPageChange} />
       </div>
     </div>
