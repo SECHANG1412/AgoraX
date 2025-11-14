@@ -16,6 +16,7 @@ export const useTopic = () => {
       description: '더미 설명 1',
       created_at: '2025-01-01T12:00:00Z',
       like_count: 10,
+      has_liked: false,
     },
     {
       topic_id: 2,
@@ -30,6 +31,7 @@ export const useTopic = () => {
       description: '더미 설명 2',
       created_at: '2025-02-01T12:00:00Z',
       like_count: 5,
+      has_liked: true,
     },
   ];
 
@@ -46,10 +48,15 @@ export const useTopic = () => {
     return TopicData;
   };
 
+  const getTopicById = async (topicId) => {
+    return dummyTopics[topicId - 1];
+  };
+
   return {
     loading,
     fetchTopics,
     countAllTopics,
     addTopic,
+    getTopicById,
   };
 };

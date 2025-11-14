@@ -6,9 +6,11 @@ import Header from './layout/Header';
 import SearchTag from './layout/SearchTag';
 import Pagination from './layout/Pagination';
 import Grid from './layout/Grid';
+import { useVote } from "../../hooks/useVote";
 
 const Main = () => {
   const { loading, fetchTopics, countAllTopics } = useTopic();
+  const { submitVote } = useVote;
   const [topics, setTopics] = useState([]);
   const [totalTopics, setTotalTopics] = useState(0);
 
@@ -64,7 +66,7 @@ const Main = () => {
   };
 
   const onVote = (topic_id, index) => {
-    console.log(topic_id, index);
+    submitVote(topic_id, index);
   };
 
   return (
@@ -73,7 +75,7 @@ const Main = () => {
         <Header title={titleText} total={totalTopics} sort={sort} onSortChange={onSortChange} />
         <SearchTag search={search} onClear={onSeachClear} />
         <Grid topics={topics} loading={loading} onVote={onVote} />
-        <Pagination currentPage={page} total={totalTopics} perPage={topicsPerPage} onPageChange={onPageChange}  />
+        <Pagination currentPage={page} total={totalTopics} perPage={topicsPerPage} onPageChange={onPageChange} />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createBrowserRouter,Navigate, Outlet, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import LoginModal from './Components/Modal/LoginModal';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -8,6 +8,7 @@ import Footer from './Components/Footer/Footer';
 import Main from './Pages/Main';
 import CreateTopic from './Pages/CreateTopic';
 import Swal from 'sweetalert2';
+import SingleTopic from "./Pages/SingleTopic";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -72,6 +73,8 @@ const router = createBrowserRouter([
         ),
         children: [{ path: 'create-topic', element: <CreateTopic /> }],
       },
+
+      { path: 'topic/:id', element: <SingleTopic /> },
     ],
   },
 ]);
