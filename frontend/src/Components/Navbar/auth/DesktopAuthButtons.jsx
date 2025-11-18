@@ -15,13 +15,13 @@ const AvatarPlaceholder = ({ name }) => {
   );
 };
 
-const DesktopAuthButtons = ({ isAuthenticated, isOpen, setIsOpen, onLoginClick, onLogoutClick, onSignupClick }) => {
+const DesktopAuthButtons = ({ userName, isAuthenticated, isOpen, setIsOpen, onLoginClick, onLogoutClick, onSignupClick }) => {
   return (
     <div className="hidden md:flex items-center ml-8">
       {isAuthenticated ? (
         <div className="relative ml-4">
           <button onClick={() => setIsOpen(!isOpen)} className="flex items-center focus:outline-none">
-            <AvatarPlaceholder name="User name" />
+            <AvatarPlaceholder name={userName} />
           </button>
 
           {isOpen && (

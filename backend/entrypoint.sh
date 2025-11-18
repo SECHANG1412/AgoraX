@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # DB가 뜰 때까지 대기
-/wait-for-it.sh db:3306 -- echo "Database is up"
+# /wait-for-it.sh db:3306 -- echo "Database is up"
+/wait-for-it.sh db:3306 -t 60 -- echo "Database is up"
 
 alembic upgrade head
 

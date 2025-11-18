@@ -10,7 +10,7 @@ const SignupModal = ({ isOpen, onClose, onLoginClick }) => {
     confirmPassword: '',
   });
 
-  const { error, setError, signup } = useAuth();
+  const { error, signup } = useAuth();
 
   const handleChange = useCallback((e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -19,24 +19,9 @@ const SignupModal = ({ isOpen, onClose, onLoginClick }) => {
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-      setError('');
-      const { email, username, password, confirmPassword } = formData;
-
-      if (username.length < 2) {
-        setError('닉네임은 최소 2글자 이상이어야 합니다.');
-        return;
-      }
-      if (password.length < 6) {
-        setError('비밀번호는 최소 6자리 이상이어야 합니다.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError('비밀번호가 일치하지 않습니다.');
-        return;
-      }
 
       try {
-        const success = await signup({ email, username, password });
+        const success = await signup(formData);
         if (success) {
           setFormData({
             email: '',
@@ -50,7 +35,7 @@ const SignupModal = ({ isOpen, onClose, onLoginClick }) => {
         console.error('Signup error:', err);
       }
     },
-    [formData, signup, setError, onLoginClick]
+    [formData, signup, onLoginClick]
   );
 
   return (

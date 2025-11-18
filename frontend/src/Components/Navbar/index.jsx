@@ -10,7 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 
 const Navbar = ({ onLoginClick, onSignupClick }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated, user } = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get('search') || '';
@@ -45,6 +45,7 @@ const Navbar = ({ onLoginClick, onSignupClick }) => {
           <MobileToggleButton isOpen={isOpen} toggle={() => setIsOpen(!isOpen)} />
 
           <DesktopAuthButtons
+            userName={user?.username || 'User'}
             isAuthenticated={isAuthenticated}
             isOpen={isOpen}
             setIsOpen={setIsOpen}

@@ -48,3 +48,13 @@ class UserCrud:
     async def get_by_email(db: AsyncSession, email: str) -> User | None:
         result = await db.execute(select(User).filter(User.email == email))
         return result.scalar_one_or_none()
+    
+    @staticmethod
+    async def update_refresh_token_by_id(
+        db: AsyncSession, user_id: int, refresh_token: str
+    ):
+        db_user = await db.get(User, user_id)
+        if db_user:
+            db_user.refresh_token = refresh_token
+            await db.flush()
+        return db_user
