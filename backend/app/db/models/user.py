@@ -19,3 +19,5 @@ class User(Base):
     topics: Mapped[List["Topic"]] = relationship(
         "Topic", back_populates="user", cascade="all, delete-orphan"
     )
+    votes: Mapped[list["Vote"]] = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user", cascade="all, delete-orphan")

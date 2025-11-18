@@ -28,4 +28,7 @@ class TopicInDB(TopicBase):
 
 
 class TopicRead(TopicInDB):
-    pass
+    has_voted: bool = False
+    user_vote_index: int | None = None
+    vote_results: list[int] = []
+    total_vote: int = 0
