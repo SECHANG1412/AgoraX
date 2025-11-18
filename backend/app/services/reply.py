@@ -1,0 +1,71 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
+from app.db.models import Reply
+from app.db.crud import UserCrud, ReplyCrud
+from app.db.schemas.replys import ReplyRead, ReplyCreate, ReplyUpdate
+
+
+class ReplyService:
+    @staticmethod
+    async def create(
+        db: AsyncSession, user_id: int, reply_data: ReplyCreate
+    ) -> ReplyRead:
+        try:
+            reply = await ReplyCrud.create(db, reply_data, user_id)
+            await db.commit()
+            await db.refresh(reply)
+            return await ReplyService._build_reply_read(db, reply, user_id)
+        except Exception:
+            await db.rollback()
+            raise
+
+    @staticmethod
+    async def update_by_id(
+        db: AsyncSession, reply_id: int, reply_data: ReplyUpdate, user_id: int
+    ) -> ReplyRead:
+        reply = await ReplyCrud.get_by_id(db, reply_id)
+        if not reply:
+            raise HTTPException(status_code=404, detail="Reply not found")
+        if reply.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not your reply")
+        try:
+            updated_reply = await ReplyCrud.update_by_id(db, reply_id, reply_data)
+            await db.commit()
+            await db.refresh(updated_reply)
+            return await ReplyService._build_reply_read(db, updated_reply, user_id)
+        except Exception:
+            await db.rollback()
+            raise
+
+    @staticmethod
+    async def delete_by_id(db: AsyncSession, reply_id: int, user_id: int) -> ReplyRead:
+        reply = await ReplyCrud.get_by_id(db, reply_id)
+        if not reply:
+            raise HTTPException(status_code=404, detail="Reply not found")
+        if reply.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not your reply")
+        try:
+            deleted = await ReplyCrud.delete_by_id(db, reply_id)
+            await db.commit()
+            return await ReplyService._build_reply_read(db, deleted, user_id)
+        except Exception:
+            await db.rollback()
+            raise
+
+    @staticmethod
+    async def get_all_by_comment_id(
+        db: AsyncSession, comment_id: int, user_id: int | None = None
+    ) -> list[ReplyRead]:
+        replies = await ReplyCrud.get_all_by_comment_id(db, comment_id)
+        return [await ReplyService._build_reply_read(db, r, user_id) for r in replies]
+
+    @staticmethod
+    async def _build_reply_read(
+        db: AsyncSession, reply: Reply, user_id: int | None = None
+    ) -> ReplyRead:
+        user = await UserCrud.get_by_id(db=db, user_id=reply.user_id)
+
+        return ReplyRead(
+            **reply.__dict__,
+            username=user.username,
+        )

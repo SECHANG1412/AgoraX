@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from app.db.schemas.replys import ReplyRead
 
 
 class CommentBase(BaseModel):
@@ -26,4 +27,4 @@ class CommentInDB(CommentBase):
 
 class CommentRead(CommentInDB):
     username: str
-    replies: list = []
+    replies: list[ReplyRead] = []

@@ -21,3 +21,6 @@ class User(Base):
     )
     votes: Mapped[list["Vote"]] = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
     comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
+    replies: Mapped[List["Reply"]] = relationship(
+        "Reply", back_populates="user", cascade="all, delete-orphan"
+    )

@@ -6,19 +6,19 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
 
-class Comment(Base):
-    __tablename__ = "comments"
+class Reply(Base):
+    __tablename__ = "replies"
 
-    comment_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    reply_id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
-    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.topic_id"), nullable=False)
+    comment_id: Mapped[int] = mapped_column(
+        ForeignKey("comments.comment_id"), nullable=False
+    )
     content: Mapped[str] = mapped_column(String(500), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP, server_default=func.now(), nullable=False
     )
 
-    topic: Mapped["Topic"] = relationship("Topic", back_populates="comments")
-    user: Mapped["User"] = relationship("User", back_populates="comments")
-    replies: Mapped[List["Reply"]] = relationship(
-        "Reply", back_populates="comment", cascade="all, delete-orphan"
-    )
+    comment: Mapped["Comment"] = relationship("Comment", back_populates="replies")
+    user: Mapped["User"] = relationship("User", back_populates="replies")
+

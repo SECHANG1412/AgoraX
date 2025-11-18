@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from app.db.crud import CommentCrud, UserCrud
 from app.db.models import Comment
 from app.db.schemas.comments import CommentRead, CommentCreate, CommentUpdate
+from app.services.reply import ReplyService
 
 class CommentService:
 
@@ -58,12 +59,20 @@ class CommentService:
 
 
     @staticmethod
-    async def _build_comment_read(db: AsyncSession, comment: Comment, user_id: int | None = None) -> CommentRead:
-        user = await UserCrud.get_by_id(db, comment.user_id)
-        replies = []
+    async def _build_comment_read(
+        db: AsyncSession, comment: Comment, user_id: int | None = None
+    ) -> CommentRead:
+        user = await UserCrud.get_by_id(db=db, user_id=comment.user_id)
+        replies = await ReplyService.get_all_by_comment_id(
+            db, comment.comment_id, user_id
+        )
 
         return CommentRead(
-            **comment.__dict__,
+            comment_id=comment.comment_id,
+            user_id=comment.user_id,
+            topic_id=comment.topic_id,
+            content=comment.content,
+            created_at=comment.created_at,
             username=user.username,
             replies=replies
         )
