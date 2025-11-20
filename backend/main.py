@@ -7,6 +7,7 @@ from app.db.database import Base, async_engine
 from fastapi.concurrency import asynccontextmanager
 from app.routers import user, topic, vote, comment, reply, like
 from app.middleware.token_refresh import TokenRefreshMiddleware
+from app.admin.setup import setup_admin
 
 load_dotenv(dotenv_path=".env")
 
@@ -18,6 +19,8 @@ async def lifespan(app: FastAPI):
     await async_engine.dispose()
 
 app = FastAPI(lifespan=lifespan)
+
+setup_admin(app, async_engine)
 
 app.add_middleware(TokenRefreshMiddleware)
 

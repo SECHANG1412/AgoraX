@@ -17,15 +17,25 @@ const Comments = ({ topicId }) => {
 
   const itemsPerPage = 10;
 
+  // const fetchComment = useCallback(async () => {
+  //   const result = await getComments(topicId);
+  //   setComments(result || []);
+  //   setCurrentPage(1);
+  // }, [getComments, topicId]);
+
+  // useEffect(() => {
+  //   fetchComment();
+  // }, [fetchComment]);
+
   const fetchComment = useCallback(async () => {
     const result = await getComments(topicId);
     setComments(result || []);
-    setCurrentPage(1);
   }, [getComments, topicId]);
 
   useEffect(() => {
     fetchComment();
-  }, [fetchComment]);
+    setCurrentPage(1);
+  }, [topicId]);
 
   const onCreateComment = async () => {
     const result = await createComment(topicId, newComment);
