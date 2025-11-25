@@ -42,15 +42,17 @@ export const showConfirmDialog = async (
   title,
   text,
   confirmButtonText = "확인",
-  cancelButtonText = "취소"
+  cancelButtonText = "취소",
+  confirmButtonColor = "#d33",
+  cancelButtonColor = "#3085d6"
 ) => {
   return await Swal.fire({
     title,
     text,
     icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#3085d6",
+    confirmButtonColor,
+    cancelButtonColor,
     confirmButtonText,
     cancelButtonText,
   });

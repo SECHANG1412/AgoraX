@@ -90,11 +90,30 @@ export const useTopic = () => {
     }
   };
 
+  const deleteTopic = async (topicId) => {
+    setLoading(true);
+    try {
+      const response = await api.delete(`/topics/${topicId}`);
+      if (response.status === 200) {
+        showSuccessAlert('토픽이 삭제되었습니다.');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      if (await handleAuthError(error)) return false;
+      showErrorAlert(error, '토픽 삭제에 실패했습니다.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     fetchTopics,
     countAllTopics,
     addTopic,
     getTopicById,
+    deleteTopic,
   };
 };

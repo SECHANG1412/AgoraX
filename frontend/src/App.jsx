@@ -8,7 +8,8 @@ import Footer from './Components/Footer/Footer';
 import Main from './Pages/Main';
 import CreateTopic from './Pages/CreateTopic';
 import Swal from 'sweetalert2';
-import SingleTopic from "./Pages/SingleTopic";
+import SingleTopic from './Pages/SingleTopic';
+import Profile from './Pages/Profile';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -71,7 +72,10 @@ const router = createBrowserRouter([
             <Outlet />
           </ProtectedRoute>
         ),
-        children: [{ path: 'create-topic', element: <CreateTopic /> }],
+        children: [
+          { path: 'create-topic', element: <CreateTopic /> },
+          { path: 'profile', element: <Profile /> },
+        ],
       },
 
       { path: 'topic/:id', element: <SingleTopic /> },

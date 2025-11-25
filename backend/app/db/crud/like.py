@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from app.db.models import TopicLike, CommentLike, ReplyLike
+from app.db.models import TopicLike, CommentLike, ReplyLike, Topic, Comment, Reply
 
 
 class LikeCrud:
@@ -139,3 +139,26 @@ class LikeCrud:
             await LikeCrud.get_reply_like_by_user_and_reply(db, user_id, reply_id)
             is not None
         )
+
+    @staticmethod
+    async def count_likes_received(db: AsyncSession, user_id: int) -> int:
+        topic_likes = (
+            select(func.count(TopicLike.like_id))
+            .join(Topic, Topic.topic_id == TopicLike.topic_id)
+            .where(Topic.user_id == user_id)
+        )
+        comment_likes = (
+            select(func.count(CommentLike.like_id))
+            .join(Comment, Comment.comment_id == CommentLike.comment_id)
+            .where(Comment.user_id == user_id)
+        )
+        reply_likes = (
+            select(func.count(ReplyLike.like_id))
+            .join(Reply, Reply.reply_id == ReplyLike.reply_id)
+            .where(Reply.user_id == user_id)
+        )
+
+        topic_count = (await db.execute(topic_likes)).scalar() or 0
+        comment_count = (await db.execute(comment_likes)).scalar() or 0
+        reply_count = (await db.execute(reply_likes)).scalar() or 0
+        return topic_count + comment_count + reply_count

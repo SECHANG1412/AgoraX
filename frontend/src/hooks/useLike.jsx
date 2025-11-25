@@ -1,10 +1,6 @@
 import { useState } from 'react';
 import api from "../utils/api";
-import {
-  handleAuthError,
-  showErrorAlert,
-  showSuccessAlert,
-} from "../utils/alertUtils";
+import { handleAuthError, showErrorAlert } from "../utils/alertUtils";
 
 export const useLike = () => {
   const toggleTopicLike = async (topicId) => {
@@ -12,11 +8,6 @@ export const useLike = () => {
       const response = await api.put(`/likes/topic/${topicId}`);
 
       if (response.status === 200) {
-        showSuccessAlert(
-          response.data
-            ? "토픽에 좋아요를 표시했습니다."
-            : "토픽 좋아요를 취소했습니다."
-        );
         return response.data;
       }
       return null;
@@ -32,11 +23,6 @@ export const useLike = () => {
       const response = await api.put(`/likes/comment/${commentId}`);
 
       if (response.status === 200) {
-        showSuccessAlert(
-          response.data
-            ? "댓글에 좋아요를 표시했습니다."
-            : "댓글 좋아요를 취소했습니다."
-        );
         return response.data;
       }
       return null;
@@ -52,11 +38,6 @@ export const useLike = () => {
       const response = await api.put(`/likes/reply/${replyId}`);
 
       if (response.status === 200) {
-        showSuccessAlert(
-          response.data
-            ? "답글에 좋아요를 표시했습니다."
-            : "답글 좋아요를 취소했습니다."
-        );
         return response.data;
       }
       return null;

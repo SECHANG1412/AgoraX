@@ -32,6 +32,16 @@ class TopicCrud:
     async def count_by_user_id(db:AsyncSession, user_id:int) -> int:
         result = await db.execute(select(func.count()).where(Topic.user_id == user_id))
         return result.scalar() or 0
+
+    @staticmethod
+    async def get_recent_by_user_id(db: AsyncSession, user_id: int, limit: int = 5):
+        result = await db.execute(
+            select(Topic)
+            .where(Topic.user_id == user_id)
+            .order_by(desc(Topic.created_at))
+            .limit(limit)
+        )
+        return result.scalars().all()
     
     @staticmethod
     async def get_all_with_filters(

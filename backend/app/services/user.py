@@ -1,8 +1,15 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-from app.db.crud import UserCrud
+from app.db.crud import UserCrud, TopicCrud, VoteCrud, LikeCrud
 from app.db.models import User
-from app.db.schemas.users import UserLogin, UserCreate, UserRead
+from app.db.schemas.users import (
+    UserLogin,
+    UserCreate,
+    UserRead,
+    UserUpdate,
+    UserStats,
+    UserActivity,
+)
 from app.core.jwt_handler import (
     create_access_token,
     create_refresh_token,
@@ -25,8 +32,11 @@ class UserService:
 
         # username 중복 확인
         if await UserCrud.get_by_username(db, user.username):
-            raise HTTPException(status_code=400, detail="이미 사용 중인 사용자 이름입니다.")
-        
+            raise HTTPException(status_code=400, detail="이미 사용 중인 사용자 이름입니다")
+        # email 중복 확인
+        if await UserCrud.get_by_email(db, user.email):
+            raise HTTPException(status_code=400, detail="이미 사용 중인 이메일입니다")
+
         # 비밀번호 해싱
         user.password = await get_password_hash(user.password)
 
@@ -55,6 +65,39 @@ class UserService:
         await db.refresh(updated_user)
 
         return await UserService._build_user_read(db, updated_user), access_token, refresh_token
+
+    @staticmethod
+    async def update_user(db: AsyncSession, user_id: int, update: UserUpdate) -> UserRead:
+        if update.email:
+            existing_email = await UserCrud.get_by_email(db, update.email)
+            if existing_email and existing_email.user_id != user_id:
+                raise HTTPException(status_code=400, detail="이미 사용 중인 이메일입니다")
+        if update.username:
+            existing_username = await UserCrud.get_by_username(db, update.username)
+            if existing_username and existing_username.user_id != user_id:
+                raise HTTPException(status_code=400, detail="이미 사용 중인 사용자 이름입니다")
+
+        db_user = await UserCrud.update_by_id(db, user_id, update)
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        await db.commit()
+        await db.refresh(db_user)
+        return await UserService._build_user_read(db, db_user)
+
+    @staticmethod
+    async def get_stats(db: AsyncSession, user_id: int) -> UserStats:
+        topics = await TopicCrud.count_by_user_id(db, user_id)
+        votes = await VoteCrud.count_by_user_id(db, user_id)
+        likes = await LikeCrud.count_likes_received(db, user_id)
+        return UserStats(topics=topics, votes=votes, likes=likes)
+
+    @staticmethod
+    async def get_activity(db: AsyncSession, user_id: int) -> list[UserActivity]:
+        topics = await TopicCrud.get_recent_by_user_id(db, user_id, limit=5)
+        return [
+            UserActivity(type="topic", title=topic.title, created_at=topic.created_at)
+            for topic in topics
+        ]
 
     @staticmethod
     async def _build_user_read(db: AsyncSession, user: User) -> UserRead:

@@ -5,7 +5,7 @@ from app.core.auth import get_user_id, get_user_id_optional
 from app.db.schemas.topics import TopicCreate, TopicRead
 from app.services import TopicService
 
-router =APIRouter(prefix="/topics", tags=["Topic"])
+router = APIRouter(prefix="/topics", tags=["Topic"])
 
 @router.post("", response_model=TopicRead)
 async def create_topic(
@@ -22,7 +22,7 @@ async def list_topics(
     user_id: int | None = Depends(get_user_id_optional),
     search: str | None = Query(None, min_length=1),
     category: str | None = Query(None),
-    sort: str = Query("created_at", enum =["create_at", "like_count", "vote_count"]),
+    sort: str = Query("created_at", enum=["created_at", "like_count", "vote_count"]),
     limit: int = Query(10, ge=1, le=50),
     offset: int = Query(0, ge=0)
 ):
@@ -49,3 +49,11 @@ async def count_topics(
 async def get_topic_detail(topic_id:int, db:AsyncSession = Depends(get_db), user_id: int | None = Depends(get_user_id_optional)):
     db_topic = await TopicService.get_by_id(db,topic_id,user_id)
     return db_topic
+
+@router.delete("/{topic_id}", response_model=bool)
+async def delete_topic(
+    topic_id: int,
+    user_id: int = Depends(get_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    return await TopicService.delete(db, topic_id, user_id)

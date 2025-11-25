@@ -3,7 +3,7 @@ import api from "../utils/api";
 import {
   handleAuthError,
   showErrorAlert,
-  showSuccessAlert,
+  showConfirmDialog,
 } from "../utils/alertUtils";
 
 export const useReply = () => {
@@ -14,10 +14,7 @@ export const useReply = () => {
         content,
       });
 
-      if (response.status === 200) {
-        showSuccessAlert("답글이 성공적으로 작성되었습니다.");
-        return response.data;
-      }
+      if (response.status === 200) return response.data;
       return null;
     } catch (error) {
       if (await handleAuthError(error)) return null;
@@ -28,10 +25,19 @@ export const useReply = () => {
 
   const deleteReply = async (replyId) => {
     try {
+      const confirm = await showConfirmDialog(
+        "답글을 삭제할까요?",
+        "삭제하면 되돌릴 수 없습니다.",
+        "삭제",
+        "취소",
+        "#EF4444",
+        "#9CA3AF"
+      );
+      if (!confirm.isConfirmed) return false;
+
       const response = await api.delete(`/replies/${replyId}`);
 
       if (response.status === 200) {
-        showSuccessAlert("답글이 성공적으로 삭제되었습니다.");
         return true;
       }
       return null;
@@ -47,10 +53,7 @@ export const useReply = () => {
     try {
       const response = await api.put(`/replies/${replyId}`, { content });
 
-      if (response.status === 200) {
-        showSuccessAlert("답글이 성공적으로 수정되었습니다.");
-        return response.data;
-      }
+      if (response.status === 200) return response.data;
       return null;
     } catch (error) {
       if (await handleAuthError(error)) return null;

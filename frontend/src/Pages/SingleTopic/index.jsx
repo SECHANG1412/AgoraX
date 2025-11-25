@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useTopic } from '../../hooks/useTopic';
 import { useLike } from '../../hooks/useLike';
 import { useVote } from '../../hooks/useVote';
+import { useAuth } from '../../hooks/useAuth';
 import Header from './layout/Header';
 import InfoBar from './layout/InfoBar';
 import VoteButtons from './layout/VoteButtons';
@@ -12,9 +14,11 @@ import Comments from './Comments';
 
 const SingleTopic = () => {
   const { id } = useParams();
-  const { getTopicById } = useTopic();
+  const navigate = useNavigate();
+  const { getTopicById, deleteTopic } = useTopic();
   const { toggleTopicLike } = useLike();
   const { submitVote } = useVote();
+  const { user: authUser } = useAuth();
 
   const [topic, setTopic] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -47,6 +51,24 @@ const SingleTopic = () => {
     if (success) await fetchTopic();
   };
 
+  const onDelete = async () => {
+    const confirm = await Swal.fire({
+      title: '토픽을 삭제할까요?',
+      text: '삭제 후에는 되돌릴 수 없습니다.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#9CA3AF',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소',
+    });
+    if (!confirm.isConfirmed) return;
+    const success = await deleteTopic(id);
+    if (success) {
+      navigate('/');
+    }
+  };
+
   if (loading)
     return (
       <div className="flex justify-center items-center py-10 text-gray-500">
@@ -64,7 +86,22 @@ const SingleTopic = () => {
 
   return (
     <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-lg p-8 border border-gray-200">
-      <Header title={topic.title} liked={topic.has_liked} likes={topic.like_count} onLikeClick={onLikeClick} />
+      <Header
+        title={topic.title}
+        liked={topic.has_liked}
+        likes={topic.like_count}
+        onLikeClick={onLikeClick}
+        actions={
+          authUser?.user_id === topic.user_id ? (
+            <button
+              onClick={onDelete}
+              className="px-3 py-2 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+            >
+              삭제
+            </button>
+          ) : null
+        }
+      />
       <p className="text-gray-600 mb-6">{topic.description}</p>
       <Chart topicId={topic.topic_id} voteOptions={topic.vote_options} />
       <InfoBar createdAt={topic.created_at} totalVotes={topic.total_vote} />

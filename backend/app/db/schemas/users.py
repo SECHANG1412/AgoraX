@@ -80,3 +80,15 @@ class UserRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserStats(BaseModel):
+    topics: int
+    votes: int
+    likes: int
+
+
+class UserActivity(BaseModel):
+    type: str
+    title: str
+    created_at: datetime

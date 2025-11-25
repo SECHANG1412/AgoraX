@@ -5,15 +5,15 @@ import { handleAuthError, showErrorAlert, showSuccessAlert } from '../utils/aler
 export const useComment = () => {
   const createComment = async (topicId, content) => {
     try {
-      const response = await api.post(`/comments`, {
-        topic_id: topicId,
-        content,
-      });
+    const response = await api.post(`/comments`, {
+      topic_id: topicId,
+      content,
+    });
 
-      if (response.status === 200) {
-        showSuccessAlert('댓글이 성공적으로 작성되었습니다.');
-        return response.data;
-      }
+    if (response.status === 200) {
+      showSuccessAlert('댓글이 성공적으로 작성되었습니다.');
+      return response.data;
+    }
       return null;
     } catch (error) {
       if (await handleAuthError(error)) return null;
@@ -43,10 +43,10 @@ export const useComment = () => {
     try {
       const response = await api.delete(`/comments/${commentId}`);
 
-      if (response.status === 200) {
-        showSuccessAlert('댓글이 성공적으로 삭제되었습니다.');
-        return true;
-      } else {
+    if (response.status === 200) {
+      showSuccessAlert('댓글이 성공적으로 삭제되었습니다.');
+      return true;
+    } else {
         showErrorAlert(new Error('예기치 않은 응답'), '댓글을 삭제할 수 없습니다.');
         return false;
       }
@@ -59,12 +59,12 @@ export const useComment = () => {
 
   const updateComment = async (commentId, content) => {
     try {
-      const response = await api.put(`/comments/${commentId}`, { content });
+    const response = await api.put(`/comments/${commentId}`, { content });
 
-      if (response.status === 200) {
-        showSuccessAlert('댓글이 성공적으로 수정되었습니다.');
-        return response.data;
-      }
+    if (response.status === 200) {
+      showSuccessAlert('댓글이 성공적으로 수정되었습니다.');
+      return response.data;
+    }
       return null;
     } catch (error) {
       if (await handleAuthError(error)) return null;

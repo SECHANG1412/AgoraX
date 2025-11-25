@@ -39,6 +39,21 @@ class TopicService:
     @staticmethod
     async def count_total(db:AsyncSession, category: str | None, search: str | None) -> int:
         return await TopicCrud.count_all_with_filters(db, category, search)
+
+    @staticmethod
+    async def delete(db: AsyncSession, topic_id: int, user_id: int) -> bool:
+        topic = await TopicCrud.get_by_id(db, topic_id)
+        if not topic:
+            raise HTTPException(status_code=404, detail="Topic not found")
+        if topic.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not your topic")
+        try:
+            deleted = await TopicCrud.delete_by_id(db, topic_id)
+            await db.commit()
+            return deleted
+        except Exception:
+            await db.rollback()
+            raise
     
     @staticmethod
     async def _build_topic_read(db: AsyncSession, topic: Topic, user_id: int | None = None) -> TopicRead:
