@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import EditableContent from './EditableContent';
 import CommentActions from './CommentActions';
 import ReplyForm from './ReplyForm';
+import { useAuth } from '../../../hooks/useAuth';
 
 const CommentItem = ({ item, isReply = false, actions, refresh }) => {
   const id = isReply ? item.reply_id : item.comment_id;
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(item.content);
   const [replying, setReplying] = useState(false);
+  const { user } = useAuth();
+  const isOwner = user?.user_id === item.user_id;
 
   const onEdit = async () => {
     const success = isReply ? await actions.onReplyEdit(id, editContent) : await actions.onEdit(id, editContent);
@@ -76,8 +79,9 @@ const CommentItem = ({ item, isReply = false, actions, refresh }) => {
             likeCount={item.like_count}
             onLikeClick={onLikeClick}
             onReplyClick={() => setReplying(!replying)}
-            onEditClick={() => setIsEditing(true)}
-            onDeleteClick={onDelete}
+            onEditClick={isOwner ? () => setIsEditing(true) : undefined}
+            onDeleteClick={isOwner ? onDelete : undefined}
+            hideOwnerActions={!isOwner}
           />
         </div>
       </div>

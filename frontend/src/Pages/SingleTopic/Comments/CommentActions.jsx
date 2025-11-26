@@ -1,7 +1,15 @@
 import React from 'react';
 import { FaEdit, FaHeart, FaRegComment, FaTrash } from 'react-icons/fa';
 
-const CommentActions = ({ hasLiked, likeCount, onLikeClick, onReplyClick, onEditClick, onDeleteClick }) => {
+const CommentActions = ({
+  hasLiked,
+  likeCount,
+  onLikeClick,
+  onReplyClick,
+  onEditClick,
+  onDeleteClick,
+  hideOwnerActions = false,
+}) => {
   return (
     <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
       <button
@@ -21,20 +29,24 @@ const CommentActions = ({ hasLiked, likeCount, onLikeClick, onReplyClick, onEdit
       >
         <FaRegComment className="w-4 h-4" />
       </button>
-      <button
-        onClick={onEditClick}
-        className="p-1 text-gray-400 hover:text-emerald-500 transition-colors"
-        title="댓글 수정"
-      >
-        <FaEdit className="w-4 h-4" />
-      </button>
-      <button
-        onClick={onDeleteClick}
-        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-        title="댓글 삭제"
-      >
-        <FaTrash className="w-4 h-4" />
-      </button>
+      {!hideOwnerActions && (
+        <>
+          <button
+            onClick={onEditClick}
+            className="p-1 text-gray-400 hover:text-emerald-500 transition-colors"
+            title="댓글 수정"
+          >
+            <FaEdit className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onDeleteClick}
+            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+            title="댓글 삭제"
+          >
+            <FaTrash className="w-4 h-4" />
+          </button>
+        </>
+      )}
     </div>
   );
 };
