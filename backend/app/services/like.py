@@ -1,11 +1,16 @@
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.crud import LikeCrud
+from app.db.crud import LikeCrud, TopicCrud, CommentCrud, ReplyCrud
 
 
 class LikeService:
     @staticmethod
     async def toggle_topic_like(db: AsyncSession, user_id: int, topic_id: int) -> bool:
         try:
+            topic = await TopicCrud.get_by_id(db, topic_id)
+            if not topic:
+                raise HTTPException(status_code=404, detail="Topic not found")
+
             like = await LikeCrud.get_topic_like_by_user_and_topic(
                 db, user_id, topic_id
             )
@@ -26,6 +31,10 @@ class LikeService:
         db: AsyncSession, user_id: int, comment_id: int
     ) -> bool:
         try:
+            comment = await CommentCrud.get_by_id(db, comment_id)
+            if not comment:
+                raise HTTPException(status_code=404, detail="Comment not found")
+
             like = await LikeCrud.get_comment_like_by_user_and_comment(
                 db, user_id, comment_id
             )
@@ -44,6 +53,10 @@ class LikeService:
     @staticmethod
     async def toggle_reply_like(db: AsyncSession, user_id: int, reply_id: int) -> bool:
         try:
+            reply = await ReplyCrud.get_by_id(db, reply_id)
+            if not reply:
+                raise HTTPException(status_code=404, detail="Reply not found")
+
             like = await LikeCrud.get_reply_like_by_user_and_reply(
                 db, user_id, reply_id
             )
