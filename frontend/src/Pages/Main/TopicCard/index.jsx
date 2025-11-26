@@ -56,7 +56,13 @@ const TopicCard = ({ topic, onVote, onPinToggle, isAuthenticated }) => {
 
           <div className="space-y-2 mb-4 mt-3">
             {topic.vote_options.map((opt, idx) => (
-              <OptionButton key={idx} index={idx} option={opt} topic={topic} onVote={onVote} />
+              <OptionButton
+                key={idx}
+                index={idx}
+                option={opt}
+                topic={topic}
+                onVote={onVote}
+              />
             ))}
           </div>
 

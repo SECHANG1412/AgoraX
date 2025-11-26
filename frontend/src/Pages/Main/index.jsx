@@ -32,7 +32,14 @@ const Main = () => {
       category,
       search,
     });
-    if (data) setTopics(data);
+    if (data) {
+      // Keep track of the original ordering so pinned items can return to their place when unpinned.
+      const withIndex = data.map((t, idx) => ({
+        ...t,
+        originalIndex: idx,
+      }));
+      setTopics(withIndex);
+    }
   }, [fetchTopics, page, sort, category, search]);
 
   useEffect(() => {
@@ -67,20 +74,44 @@ const Main = () => {
     setSearchParams(updated);
   };
 
-  const onVote = (topic_id, index) => {
-    submitVote({ topicId: topic_id, voteIndex: index });
+  const onVote = async (topic_id, index) => {
+    const res = await submitVote({ topicId: topic_id, voteIndex: index });
+    if (!res) return;
+
+    // Optimistically update the local topic list so the UI reflects the vote immediately.
+    setTopics((prev) =>
+      prev.map((t) => {
+        if (t.topic_id !== topic_id) return t;
+        const updatedResults = [...t.vote_results];
+        if (index >= 0 && index < updatedResults.length) {
+          updatedResults[index] = updatedResults[index] + 1;
+        }
+        return {
+          ...t,
+          has_voted: true,
+          user_vote_index: index,
+          total_vote: t.total_vote + 1,
+          vote_results: updatedResults,
+        };
+      })
+    );
   };
+
+  const sortByPinnedThenOriginal = (list) =>
+    [...list].sort(
+      (a, b) =>
+        (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0) ||
+        (a.originalIndex ?? 0) - (b.originalIndex ?? 0)
+    );
 
   const onPinToggle = async (topic_id, is_pinned) => {
     if (!isAuthenticated) return;
-    // optimistic update
+    // optimistic update with stable original order
     setTopics((prev) => {
       const updated = prev.map((t) =>
         t.topic_id === topic_id ? { ...t, is_pinned: !is_pinned } : t
       );
-      const pinned = updated.filter((t) => t.is_pinned);
-      const others = updated.filter((t) => !t.is_pinned);
-      return [...pinned, ...others];
+      return sortByPinnedThenOriginal(updated);
     });
     const success = is_pinned ? await unpinTopic(topic_id) : await pinTopic(topic_id);
     if (!success) {
@@ -89,9 +120,7 @@ const Main = () => {
         const reverted = prev.map((t) =>
           t.topic_id === topic_id ? { ...t, is_pinned: is_pinned } : t
         );
-        const pinned = reverted.filter((t) => t.is_pinned);
-        const others = reverted.filter((t) => !t.is_pinned);
-        return [...pinned, ...others];
+        return sortByPinnedThenOriginal(reverted);
       });
     }
   };

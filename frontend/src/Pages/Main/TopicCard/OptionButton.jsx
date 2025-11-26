@@ -32,7 +32,7 @@ const OptionButton = ({ option, index, topic, onVote }) => {
         if (!topic.has_voted) onVote(topic.topic_id, index);
       }}
       style={styles}
-      className="w-full flex justify-between items-center p-2 rounded-lg text-sm font-medium transition disabled:cursor-not-allowed"
+      className="group w-full flex justify-between items-center p-2 rounded-lg text-sm font-medium transition cursor-pointer disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-md hover:border-transparent hover:ring-2 hover:ring-emerald-200 hover:ring-offset-1 hover:bg-opacity-90"
     >
       <span className="ml-1">{option}</span>
       <span className="px-2 py-0.5 rounded-full text-xs bg-white/70 text-gray-700">
