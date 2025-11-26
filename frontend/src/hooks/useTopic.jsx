@@ -31,6 +31,28 @@ export const useTopic = () => {
     }
   };
 
+  const pinTopic = async (topicId) => {
+    try {
+      const response = await api.post(`/topics/${topicId}/pin`);
+      return response.status === 200;
+    } catch (error) {
+      if (await handleAuthError(error)) return false;
+      showErrorAlert(error, '핀 고정에 실패했습니다.');
+      return false;
+    }
+  };
+
+  const unpinTopic = async (topicId) => {
+    try {
+      const response = await api.delete(`/topics/${topicId}/pin`);
+      return response.status === 200;
+    } catch (error) {
+      if (await handleAuthError(error)) return false;
+      showErrorAlert(error, '핀 해제에 실패했습니다.');
+      return false;
+    }
+  };
+
   const countAllTopics = async (category, search) => {
     setLoading(true);
     try {
@@ -115,5 +137,7 @@ export const useTopic = () => {
     addTopic,
     getTopicById,
     deleteTopic,
+    pinTopic,
+    unpinTopic,
   };
 };

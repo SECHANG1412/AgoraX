@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
 import ProgressBar from './ProgressBar';
 import OptionButton from './OptionButton';
 import VoteInfo from './VoteInfo';
 
-const TopicCard = ({ topic, onVote }) => {
+const TopicCard = ({ topic, onVote, onPinToggle, isAuthenticated }) => {
   const formattedDate = useMemo(() => {
     return new Date(topic.created_at).toLocaleString('ko-KR', {
       year: 'numeric',
@@ -28,11 +29,25 @@ const TopicCard = ({ topic, onVote }) => {
               )}
               <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">{topic.title}</h3>
             </div>
-            {topic.category && (
-              <span className="px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100">
-                {topic.category}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {topic.category && (
+                <span className="px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100">
+                  {topic.category}
+                </span>
+              )}
+              {isAuthenticated && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onPinToggle(topic.topic_id, topic.is_pinned);
+                  }}
+                  className="p-2 rounded-full border border-gray-200 hover:border-blue-400 hover:text-blue-600 transition text-gray-500"
+                  aria-label="핀 고정"
+                >
+                  {topic.is_pinned ? <BsBookmarkFill className="w-4 h-4" /> : <BsBookmark className="w-4 h-4" />}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* description intentionally hidden */}

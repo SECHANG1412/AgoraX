@@ -4,6 +4,7 @@ from app.db.database import get_db
 from app.core.auth import get_user_id, get_user_id_optional
 from app.db.schemas.topics import TopicCreate, TopicRead
 from app.services import TopicService
+from app.db.crud import PinnedTopicCrud
 
 router = APIRouter(prefix="/topics", tags=["Topic"])
 
@@ -57,3 +58,25 @@ async def delete_topic(
     db: AsyncSession = Depends(get_db),
 ):
     return await TopicService.delete(db, topic_id, user_id)
+
+
+@router.post("/{topic_id}/pin", response_model=bool)
+async def pin_topic(
+    topic_id: int,
+    user_id: int = Depends(get_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    await PinnedTopicCrud.pin(db, user_id, topic_id)
+    await db.commit()
+    return True
+
+
+@router.delete("/{topic_id}/pin", response_model=bool)
+async def unpin_topic(
+    topic_id: int,
+    user_id: int = Depends(get_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    removed = await PinnedTopicCrud.unpin(db, user_id, topic_id)
+    await db.commit()
+    return removed

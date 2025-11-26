@@ -41,35 +41,50 @@ const DesktopAuthButtons = ({
     <div className="hidden md:flex items-center">
       {isAuthenticated ? (
         <div className="relative ml-4" ref={containerRef}>
-          <button onClick={() => setIsOpen(!isOpen)} className="flex items-center focus:outline-none">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center focus:outline-none border border-gray-200 rounded-full p-1 hover:border-gray-300 transition"
+          >
             <AvatarPlaceholder name={userName} />
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-              <Link
-                to="/profile"
-                className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                onClick={() => setIsOpen(false)}
-              >
-                프로필
-              </Link>
-              <Link
-                to="/contact"
-                className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                onClick={() => setIsOpen(false)}
-              >
-                문의하기
-              </Link>
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  onLogoutClick();
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
-              >
-                로그아웃
-              </button>
+            <div className="absolute right-0 mt-3 w-60 bg-white rounded-xl shadow-lg border border-gray-200 z-20 overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+                <AvatarPlaceholder name={userName} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-900">{userName}</span>
+                </div>
+              </div>
+
+              <div className="py-1">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span>프로필</span>
+                </Link>
+                <Link
+                  to="/contact"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span>문의하기</span>
+                </Link>
+              </div>
+
+              <div className="border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    onLogoutClick();
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm font-medium text-red-500 hover:bg-gray-50"
+                >
+                  로그아웃
+                </button>
+              </div>
             </div>
           )}
         </div>

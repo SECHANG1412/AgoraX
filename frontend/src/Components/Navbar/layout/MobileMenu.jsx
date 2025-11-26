@@ -2,6 +2,7 @@ import React from 'react';
 import { BiSearch } from 'react-icons/bi';
 import SharedNavLinks from '../shared/SharedNavLinks';
 import MobileAuthButtons from '../auth/MobileAuthButtons';
+import { Link } from 'react-router-dom';
 
 const MobileMenu = ({
   isOpen,
@@ -39,8 +40,21 @@ const MobileMenu = ({
           <SharedNavLinks
             linkClassName="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:bg-gray-100 transition-colors"
             onClick={() => setIsOpen(false)}
+            isAuthenticated={isAuthenticated}
           />
         </div>
+
+        {isAuthenticated && (
+          <div className="pb-2">
+            <Link
+              to="/create-topic"
+              onClick={() => setIsOpen(false)}
+              className="block w-full text-center px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              토픽 생성
+            </Link>
+          </div>
+        )}
 
         <MobileAuthButtons
           isAuthenticated={isAuthenticated}

@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.crud import TopicCrud, VoteCrud, LikeCrud
+from app.db.crud import TopicCrud, VoteCrud, LikeCrud, PinnedTopicCrud
 from app.db.schemas.topics import TopicCreate, TopicRead
 from app.db.models import Topic
 
@@ -34,7 +34,17 @@ class TopicService:
         user_id: int | None = None
     ) -> list[TopicRead]:
         db_topics = await TopicCrud.get_all_with_filters(db,search,category,sort,limit,offset)
-        return [await TopicService._build_topic_read(db, db_topic, user_id) for db_topic in db_topics]
+        pinned_map: dict[int, int] = {}
+        if user_id is not None:
+            pinned = await PinnedTopicCrud.list_by_user(db, user_id)
+            pinned_map = {p.topic_id: idx for idx, p in enumerate(pinned)}
+
+        topic_reads = [await TopicService._build_topic_read(db, db_topic, user_id) for db_topic in db_topics]
+
+        if pinned_map:
+            topic_reads.sort(key=lambda t: pinned_map.get(t.topic_id, 10**9))
+
+        return topic_reads
     
     @staticmethod
     async def count_total(db:AsyncSession, category: str | None, search: str | None) -> int:
@@ -79,5 +89,8 @@ class TopicService:
             result.has_liked = await LikeCrud.has_user_liked_topic(
                 db, topic.topic_id, user_id
             )
+
+        if user_id is not None:
+            result.is_pinned = await PinnedTopicCrud.is_pinned(db, user_id, topic.topic_id)
 
         return result

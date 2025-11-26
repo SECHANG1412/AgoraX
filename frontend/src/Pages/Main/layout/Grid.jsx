@@ -1,7 +1,7 @@
 import React from 'react';
 import TopicCard from '../TopicCard';
 
-const Grid = ({ topics, loading, onVote }) => {
+const Grid = ({ topics, loading, onVote, onPinToggle, isAuthenticated }) => {
   if (loading) {
     return <p className="text-center text-gray-500 col-span-4">로딩 중...</p>;
   }
@@ -13,7 +13,13 @@ const Grid = ({ topics, loading, onVote }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {topics.map((topic, idx) => (
-        <TopicCard topic={topic} onVote={onVote} key={idx}/>
+        <TopicCard
+          topic={topic}
+          onVote={onVote}
+          onPinToggle={onPinToggle}
+          isAuthenticated={isAuthenticated}
+          key={idx}
+        />
       ))}
     </div>
   );

@@ -7,10 +7,12 @@ import SearchTag from './layout/SearchTag';
 import Pagination from './layout/Pagination';
 import Grid from './layout/Grid';
 import { useVote } from "../../hooks/useVote";
+import { useAuth } from "../../hooks/useAuth";
 
 const Main = () => {
-  const { loading, fetchTopics, countAllTopics } = useTopic();
-  const { submitVote } = useVote;
+  const { loading, fetchTopics, countAllTopics, pinTopic, unpinTopic } = useTopic();
+  const { submitVote } = useVote();
+  const { isAuthenticated } = useAuth();
   const [topics, setTopics] = useState([]);
   const [totalTopics, setTotalTopics] = useState(0);
 
@@ -69,12 +71,37 @@ const Main = () => {
     submitVote(topic_id, index);
   };
 
+  const onPinToggle = async (topic_id, is_pinned) => {
+    if (!isAuthenticated) return;
+    // optimistic update
+    setTopics((prev) => {
+      const updated = prev.map((t) =>
+        t.topic_id === topic_id ? { ...t, is_pinned: !is_pinned } : t
+      );
+      const pinned = updated.filter((t) => t.is_pinned);
+      const others = updated.filter((t) => !t.is_pinned);
+      return [...pinned, ...others];
+    });
+    const success = is_pinned ? await unpinTopic(topic_id) : await pinTopic(topic_id);
+    if (!success) {
+      // revert on failure
+      setTopics((prev) => {
+        const reverted = prev.map((t) =>
+          t.topic_id === topic_id ? { ...t, is_pinned: is_pinned } : t
+        );
+        const pinned = reverted.filter((t) => t.is_pinned);
+        const others = reverted.filter((t) => !t.is_pinned);
+        return [...pinned, ...others];
+      });
+    }
+  };
+
   return (
     <div className="w-full px-4 pt-6 pb-10 bg-white">
       <div className="container mx-auto px-0">
         <Header title={titleText} total={totalTopics} sort={sort} onSortChange={onSortChange} />
         <SearchTag search={search} onClear={onSeachClear} />
-        <Grid topics={topics} loading={loading} onVote={onVote} />
+        <Grid topics={topics} loading={loading} onVote={onVote} onPinToggle={onPinToggle} isAuthenticated={isAuthenticated} />
         <Pagination currentPage={page} total={totalTopics} perPage={topicsPerPage} onPageChange={onPageChange} />
       </div>
     </div>
