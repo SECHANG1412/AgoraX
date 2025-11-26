@@ -275,7 +275,6 @@ const Profile = () => {
         <Card title="알림 설정">
           <ToggleRow label="댓글/답글 알림" enabled />
           <ToggleRow label="좋아요 알림" enabled={false} />
-          <ToggleRow label="주간 요약 메일" enabled />
         </Card>
 
         <Card title="최근 활동">

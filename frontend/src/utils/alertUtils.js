@@ -3,8 +3,8 @@ import Swal from "sweetalert2";
 export const handleAuthError = async (error) => {
   if (error.response?.status === 401) {
     await Swal.fire({
-      title: "로그인이 필요합니다!",
-      text: "이 페이지를 이용하려면 로그인하세요.",
+      title: "로그인이 필요해요",
+      text: "해당 페이지를 이용하려면 로그인하세요.",
       icon: "warning",
       confirmButtonText: "확인",
       confirmButtonColor: "#34D399",
@@ -12,6 +12,16 @@ export const handleAuthError = async (error) => {
     return true;
   }
   return false;
+};
+
+export const showLoginRequiredAlert = async (message = "투표를 하려면 로그인해 주세요.") => {
+  await Swal.fire({
+    title: "로그인이 필요합니다",
+    text: message,
+    icon: "warning",
+    confirmButtonText: "확인",
+    confirmButtonColor: "#34D399",
+  });
 };
 
 export const showErrorAlert = (

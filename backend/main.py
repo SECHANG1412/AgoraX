@@ -3,14 +3,15 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.concurrency import asynccontextmanager
 from app.db.database import Base, async_engine
 from app.db import models  # ensure all models (including new ones) are registered
-from fastapi.concurrency import asynccontextmanager
 from app.routers import user, topic, vote, comment, reply, like
 from app.middleware.token_refresh import TokenRefreshMiddleware
 from app.admin.setup import setup_admin
 
 load_dotenv(dotenv_path=".env")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
     yield
     await async_engine.dispose()
 
+
 app = FastAPI(lifespan=lifespan)
 
 setup_admin(app, async_engine)
@@ -26,8 +28,14 @@ setup_admin(app, async_engine)
 # CORS should run before custom middleware so that preflight/headers are applied
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 개발 환경: 모든 오리진 허용
-    allow_origin_regex="https?://localhost(:[0-9]+)?",
+    # When sending cookies (withCredentials), wildcard origins are not allowed.
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ],
+    allow_origin_regex=None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
