@@ -4,9 +4,25 @@ import { voteColors } from '../../../constants/voteColors';
 const OptionButton = ({ option, index, topic, onVote }) => {
   const optionCount = topic.vote_options.length;
   const isSelected = topic.has_voted && topic.user_vote_index === index;
+  const baseColor = voteColors[optionCount][index];
 
-  const bgColor = topic.has_voted && !isSelected ? '#9CA3AF' : voteColors[optionCount][index];
-  const opacity = topic.has_voted && !isSelected ? 0.6 : 1;
+  const styles = {
+    backgroundColor: topic.has_voted
+      ? isSelected
+        ? baseColor
+        : '#f8fafc'
+      : '#ffffff',
+    color: topic.has_voted
+      ? isSelected
+        ? '#ffffff'
+        : '#475569'
+      : baseColor,
+    border: topic.has_voted
+      ? isSelected
+        ? `1px solid ${baseColor}`
+        : '1px solid #e5e7eb'
+      : `1px solid ${baseColor}`,
+  };
 
   return (
     <button
@@ -15,11 +31,13 @@ const OptionButton = ({ option, index, topic, onVote }) => {
         e.preventDefault();
         if (!topic.has_voted) onVote(topic.topic_id, index);
       }}
-      style={{ backgroundColor: bgColor, opacity }}
-      className="w-full flex justify-between items-center p-2 rounded-lg text-white"
+      style={styles}
+      className="w-full flex justify-between items-center p-2 rounded-lg text-sm font-medium transition disabled:cursor-not-allowed"
     >
-      <span className="ml-2 font-semibold">{option}</span>
-      <span className="bg-white/30 px-2 py-0.5 rounded-full text-sm">{topic.vote_results[index]}표</span>
+      <span className="ml-1">{option}</span>
+      <span className="px-2 py-0.5 rounded-full text-xs bg-white/70 text-gray-700">
+        {topic.vote_results[index]}표
+      </span>
     </button>
   );
 };

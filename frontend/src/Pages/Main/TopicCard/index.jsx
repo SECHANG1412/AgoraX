@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { voteColors } from '../../../constants/voteColors';
 import ProgressBar from './ProgressBar';
 import OptionButton from './OptionButton';
-import VoteInfo from "./VoteInfo";
+import VoteInfo from './VoteInfo';
 
 const TopicCard = ({ topic, onVote }) => {
   const formattedDate = useMemo(() => {
@@ -18,33 +17,29 @@ const TopicCard = ({ topic, onVote }) => {
 
   return (
     <Link to={`/topic/${topic.topic_id}`}>
-      <div
-        className={`relative flex flex-col p-4 h-full border-2 border-emerald-300 rounded-lg transition-shadow hover:shadow-lg ${
-          topic.has_voted ? 'bg-gray-100' : 'bg-white'
-        }`}
-      >
-        {topic.has_voted && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-lg">
-            <span className="px-6 py-4 text-xl font-bold text-white bg-emerald-500 rounded-b-lg">
-              이미 투표한 토픽입니다.
-            </span>
-          </div>
-        )}
-
+      <div className="relative flex flex-col p-4 h-full border border-gray-200 rounded-xl bg-white transition hover:shadow-md hover:border-blue-200">
         <div className="flex-1 flex flex-col">
-          <div className="mb-2 flex justify-between items-start">
-            <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">{topic.title}</h3>
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {topic.has_voted && (
+                <span className="px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 rounded-full">
+                  Voted
+                </span>
+              )}
+              <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">{topic.title}</h3>
+            </div>
             {topic.category && (
-              <span className="px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full">
+              <span className="px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100">
                 {topic.category}
               </span>
             )}
           </div>
-          {/* description hidden */}
-          <div className="mb-4" />
+
+          {/* description intentionally hidden */}
+          <div className="mb-2" />
           <ProgressBar voteResults={topic.vote_results} totalVote={topic.total_vote} />
 
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-4 mt-3">
             {topic.vote_options.map((opt, idx) => (
               <OptionButton key={idx} index={idx} option={opt} topic={topic} onVote={onVote} />
             ))}
