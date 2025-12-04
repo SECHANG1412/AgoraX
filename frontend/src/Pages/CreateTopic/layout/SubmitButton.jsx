@@ -5,7 +5,7 @@ const SubmitButton = ({ label }) => {
     <div className="flex justify-end">
       <button
         type="submit"
-        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
+        className="px-6 py-3 border border-slate-900 text-white rounded-lg bg-slate-900 shadow-sm hover:bg-slate-800 hover:border-slate-800 transition-all duration-200 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-200"
       >
         {label}
       </button>

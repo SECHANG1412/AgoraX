@@ -104,9 +104,9 @@ const CreateTopic = () => {
   }, []);
 
   return (
-    <div className="flex items-center justify-center px-4">
-      <div className="max-w-3xl w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">새로운 토픽 만들기</h2>
+    <div className="flex items-center justify-center px-4 py-10 bg-slate-50">
+      <div className="max-w-3xl w-full bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+        <h2 className="text-2xl font-semibold text-slate-900 mb-6">새로운 토픽 만들기</h2>
         <form onSubmit={onSubmit} className="space-y-6">
           <FormField
             label="제목"
