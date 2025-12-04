@@ -35,7 +35,7 @@ const MobileMenu = ({
 
         <div className="pb-2 border-b border-gray-200">
           <SharedNavLinks
-            linkClassName="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:bg-gray-100 transition-colors"
+            linkClassName="block px-3 py-2 rounded-md text-base font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
             onClick={() => setIsOpen(false)}
             isAuthenticated={isAuthenticated}
           />
@@ -48,7 +48,7 @@ const MobileMenu = ({
               onClick={() => setIsOpen(false)}
               className="block w-full text-center px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
             >
-              토픽 생성
+              토픽 만들기
             </Link>
           </div>
         )}

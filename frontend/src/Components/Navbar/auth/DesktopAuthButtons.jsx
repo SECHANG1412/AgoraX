@@ -9,7 +9,7 @@ const AvatarPlaceholder = ({ name }) => {
     .toUpperCase();
 
   return (
-    <div className="w-10 h-10 bg-gray-200 text-gray-800 flex items-center justify-center rounded-full font-bold text-sm cursor-pointer">
+    <div className="w-10 h-10 bg-blue-50 text-blue-700 flex items-center justify-center rounded-full font-bold text-sm cursor-pointer border border-blue-100">
       {initials}
     </div>
   );
@@ -43,7 +43,7 @@ const DesktopAuthButtons = ({
         <div className="relative ml-4" ref={containerRef}>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center focus:outline-none border border-gray-200 rounded-full p-1 hover:border-gray-300 transition"
+            className="flex items-center focus:outline-none border border-gray-200 rounded-full p-1 hover:border-blue-300 transition"
           >
             <AvatarPlaceholder name={userName} />
           </button>
@@ -54,6 +54,7 @@ const DesktopAuthButtons = ({
                 <AvatarPlaceholder name={userName} />
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-gray-900">{userName}</span>
+                  <span className="text-xs text-gray-500">내 프로필</span>
                 </div>
               </div>
 
@@ -64,13 +65,6 @@ const DesktopAuthButtons = ({
                   onClick={() => setIsOpen(false)}
                 >
                   <span>프로필</span>
-                </Link>
-                <Link
-                  to="/contact"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span>문의하기</span>
                 </Link>
               </div>
 
@@ -92,13 +86,13 @@ const DesktopAuthButtons = ({
         <div className="flex space-x-3">
           <button
             onClick={onLoginClick}
-            className="px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:border-blue-500 hover:text-blue-600 transition-colors"
+            className="px-3 py-2 text-sm font-semibold text-gray-800 bg-white border border-gray-300 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-colors"
           >
             로그인
           </button>
           <button
             onClick={onSignupClick}
-            className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            className="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
           >
             가입하기
           </button>

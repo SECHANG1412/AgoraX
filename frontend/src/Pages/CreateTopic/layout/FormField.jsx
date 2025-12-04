@@ -12,7 +12,7 @@ const FormField = ({ label, name, value, onChange, placeholder, required = true,
           value={value}
           onChange={onChange}
           required={required}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 h-24"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
           placeholder={placeholder}
         />
       ) : (
@@ -22,7 +22,7 @@ const FormField = ({ label, name, value, onChange, placeholder, required = true,
           value={value}
           onChange={onChange}
           required={required}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           placeholder={placeholder}
         />
       )}

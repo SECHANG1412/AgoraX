@@ -9,7 +9,7 @@ const MobileAuthButtons = ({ isAuthenticated, setIsOpen, onLoginClick, onLogoutC
           <Link
             to="/profile"
             onClick={() => setIsOpen(false)}
-            className="text-gray-800 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 text-left"
+            className="text-gray-800 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-semibold transition-all duration-200 text-left"
           >
             프로필
           </Link>
@@ -18,7 +18,7 @@ const MobileAuthButtons = ({ isAuthenticated, setIsOpen, onLoginClick, onLogoutC
               setIsOpen(false);
               onLogoutClick();
             }}
-            className="text-gray-800 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 text-left"
+            className="text-gray-800 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-semibold transition-all duration-200 text-left"
           >
             로그아웃
           </button>
@@ -30,7 +30,7 @@ const MobileAuthButtons = ({ isAuthenticated, setIsOpen, onLoginClick, onLogoutC
               setIsOpen(false);
               onLoginClick();
             }}
-            className="text-gray-800 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 text-left"
+            className="text-gray-800 hover:bg-gray-100 block px-3 py-2 rounded-md text-base font-semibold transition-all duration-200 text-left"
           >
             로그인
           </button>
@@ -39,7 +39,7 @@ const MobileAuthButtons = ({ isAuthenticated, setIsOpen, onLoginClick, onLogoutC
               setIsOpen(false);
               onSignupClick();
             }}
-            className="text-white bg-blue-600 hover:bg-blue-700 block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 text-left"
+            className="text-white bg-blue-600 hover:bg-blue-700 block px-3 py-2 rounded-md text-base font-semibold transition-all duration-200 text-left"
           >
             가입하기
           </button>

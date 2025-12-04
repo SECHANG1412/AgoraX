@@ -45,10 +45,10 @@ const CommentItem = ({ item, isReply = false, actions, refresh }) => {
 
   return (
     <div className={`${isReply ? 'ml-6 mt-2' : 'mb-6'}`}>
-      <div className="flex justify-between bg-white p-4 rounded-lg border border-gray-300">
+      <div className="flex justify-between bg-white p-4 rounded-lg border border-gray-200">
         <div className="flex items-start space-x-3 flex-grow">
-          <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-            <span className="text-emerald-600 font-medium">{item.username.charAt(0).toUpperCase()}</span>
+          <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100">
+            <span className="text-blue-700 font-medium">{item.username.charAt(0).toUpperCase()}</span>
           </div>
           <div className="flex-1">
             <div className="flex items-center space-x-2">

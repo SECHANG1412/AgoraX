@@ -72,7 +72,7 @@ const SingleTopic = () => {
   if (loading)
     return (
       <div className="flex justify-center items-center py-10 text-gray-500">
-        <div className="animate-spin h-6 w-6 border-4 border-emerald-500 border-t-transparent rounded-full mr-3" />
+        <div className="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full mr-3" />
         <span>로딩 중...</span>
       </div>
     );
@@ -80,12 +80,12 @@ const SingleTopic = () => {
   if (!topic)
     return (
       <div className="text-center py-10 bg-gray-50 rounded-lg">
-        <p className="text-lg text-gray-500">토픽을 찾을 수 없습니다</p>
+        <p className="text-lg text-gray-500">토픽을 찾을 수 없습니다.</p>
       </div>
     );
 
   return (
-    <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-lg p-8 border border-gray-200">
+    <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-2xl p-8 border border-gray-200">
       <Header
         title={topic.title}
         liked={topic.has_liked}
@@ -95,14 +95,14 @@ const SingleTopic = () => {
           authUser?.user_id === topic.user_id ? (
             <button
               onClick={onDelete}
-              className="px-3 py-2 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+              className="px-3 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-100"
             >
               삭제
             </button>
           ) : null
         }
       />
-      <p className="text-gray-600 mb-6">{topic.description}</p>
+      <p className="text-gray-700 mb-6 leading-relaxed">{topic.description}</p>
       <Chart topicId={topic.topic_id} voteOptions={topic.vote_options} />
       <InfoBar createdAt={topic.created_at} totalVotes={topic.total_vote} />
       <VoteButtons

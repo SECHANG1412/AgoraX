@@ -1,13 +1,16 @@
-import React, { useEffect, useCallback, useMemo, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Categories from '../../Components/Navbar/layout/Categories';
 import { useTopic } from '../../hooks/useTopic';
-import Header from './layout/Header';
-import SearchTag from './layout/SearchTag';
 import Pagination from './layout/Pagination';
 import Grid from './layout/Grid';
 import { useVote } from "../../hooks/useVote";
 import { useAuth } from "../../hooks/useAuth";
+
+const SORT_MAP = {
+  recent: 'created_at',
+  likes: 'like_count',
+  views: 'view_count',
+};
 
 const Main = () => {
   const { loading, fetchTopics, countAllTopics, pinTopic, unpinTopic } = useTopic();
@@ -19,42 +22,45 @@ const Main = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const category = searchParams.get('category') || '';
-  const sort = searchParams.get('sort') || 'created_at';
+  const rawSort = searchParams.get('sort');
+  const sortParam =
+    rawSort === 'created_at'
+      ? 'recent'
+      : rawSort === 'like_count'
+        ? 'likes'
+        : rawSort === 'view_count'
+          ? 'views'
+          : rawSort || 'recent';
+  const sort = SORT_MAP[sortParam] ? sortParam : 'recent';
   const search = searchParams.get('search') || '';
   const page = parseInt(searchParams.get('page') || '1', 10);
-  const topicsPerPage = 12;
+  const topicsPerPage = 10;
+
+  const apiSort = SORT_MAP[sort];
 
   const loadTopics = useCallback(async () => {
     const data = await fetchTopics({
       offset: page,
       limit: topicsPerPage,
-      sort,
+      sort: apiSort,
       category,
       search,
     });
     if (data) {
-      // Keep track of the original ordering so pinned items can return to their place when unpinned.
       const withIndex = data.map((t, idx) => ({
         ...t,
         originalIndex: idx,
       }));
       setTopics(withIndex);
     }
-  }, [fetchTopics, page, sort, category, search]);
+  }, [fetchTopics, page, apiSort, category, search]);
 
   useEffect(() => {
     countAllTopics(category, search).then((count) => {
       setTotalTopics(count || 0);
     });
     loadTopics();
-  }, [category, sort, page, search]);
-
-  const onSortChange = (e) => {
-    const updated = new URLSearchParams(searchParams);
-    updated.set('sort', e.target.value);
-    updated.set('page', 1);
-    setSearchParams(updated);
-  };
+  }, [category, apiSort, page, search]);
 
   const onPageChange = (p) => {
     const updated = new URLSearchParams(searchParams);
@@ -62,23 +68,10 @@ const Main = () => {
     setSearchParams(updated);
   };
 
-  const titleText = useMemo(() => {
-    if (search) return `"${search}" 검색 결과`;
-    if (category) return `${category}`;
-    return '전체';
-  }, [search, category]);
-
-  const onSeachClear = () => {
-    const updated = new URLSearchParams(searchParams);
-    updated.delete('search');
-    setSearchParams(updated);
-  };
-
   const onVote = async (topic_id, index) => {
     const res = await submitVote({ topicId: topic_id, voteIndex: index });
     if (!res) return;
 
-    // Optimistically update the local topic list so the UI reflects the vote immediately.
     setTopics((prev) =>
       prev.map((t) => {
         if (t.topic_id !== topic_id) return t;
@@ -106,7 +99,6 @@ const Main = () => {
 
   const onPinToggle = async (topic_id, is_pinned) => {
     if (!isAuthenticated) return;
-    // optimistic update with stable original order
     setTopics((prev) => {
       const updated = prev.map((t) =>
         t.topic_id === topic_id ? { ...t, is_pinned: !is_pinned } : t
@@ -115,7 +107,6 @@ const Main = () => {
     });
     const success = is_pinned ? await unpinTopic(topic_id) : await pinTopic(topic_id);
     if (!success) {
-      // revert on failure
       setTopics((prev) => {
         const reverted = prev.map((t) =>
           t.topic_id === topic_id ? { ...t, is_pinned: is_pinned } : t
@@ -126,10 +117,8 @@ const Main = () => {
   };
 
   return (
-    <div className="w-full px-4 pt-6 pb-10 bg-white">
+    <div className="w-full px-0 pt-4 pb-10">
       <div className="container mx-auto px-0">
-        <Header title={titleText} total={totalTopics} sort={sort} onSortChange={onSortChange} />
-        <SearchTag search={search} onClear={onSeachClear} />
         <Grid topics={topics} loading={loading} onVote={onVote} onPinToggle={onPinToggle} isAuthenticated={isAuthenticated} />
         <Pagination currentPage={page} total={totalTopics} perPage={topicsPerPage} onPageChange={onPageChange} />
       </div>

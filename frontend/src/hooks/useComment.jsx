@@ -11,7 +11,7 @@ export const useComment = () => {
       });
 
       if (response.status === 200) {
-        showSuccessAlert('댓글이 성공적으로 작성되었습니다.');
+        showSuccessAlert('댓글이 등록되었습니다.');
         return response.data;
       }
       return null;
@@ -29,7 +29,7 @@ export const useComment = () => {
       if (response.status === 200) {
         return response.data;
       } else {
-        showErrorAlert(new Error('비정상 응답'), '댓글을 불러오지 못했습니다.');
+        showErrorAlert(new Error('데이터 에러'), '댓글을 불러오지 못했습니다.');
         return null;
       }
     } catch (error) {
@@ -44,10 +44,10 @@ export const useComment = () => {
       const response = await api.delete(`/comments/${commentId}`);
 
       if (response.status === 200) {
-        showSuccessAlert('댓글이 성공적으로 삭제되었습니다.');
+        showSuccessAlert('댓글이 삭제되었습니다.');
         return true;
       } else {
-        showErrorAlert(new Error('비정상 응답'), '댓글 삭제에 실패했습니다.');
+        showErrorAlert(new Error('데이터 에러'), '댓글 삭제에 실패했습니다.');
         return false;
       }
     } catch (error) {
@@ -62,7 +62,7 @@ export const useComment = () => {
       const response = await api.put(`/comments/${commentId}`, { content });
 
       if (response.status === 200) {
-        showSuccessAlert('댓글이 성공적으로 수정되었습니다.');
+        showSuccessAlert('댓글이 수정되었습니다.');
         return response.data;
       }
       return null;

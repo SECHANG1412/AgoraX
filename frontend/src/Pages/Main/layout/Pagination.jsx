@@ -25,7 +25,7 @@ const Pagination = ({ currentPage, total, perPage, onPageChange }) => {
   }, [currentPage, totalPages]);
 
   return (
-    <div className="mt-6 flex justify-center gap-2 flex-wrap">
+    <div className="mt-8 flex justify-center gap-2 flex-wrap">
       {pages.map((page, index) =>
         page === '...' ? (
           <span key={index} className="px-3 py-2 text-gray-500">
@@ -35,8 +35,10 @@ const Pagination = ({ currentPage, total, perPage, onPageChange }) => {
           <button
             key={index}
             onClick={() => onPageChange(page)}
-            className={`px-3 py-2 border rounded-lg hover:bg-emerald-500 hover:text-white ${
-              page === currentPage ? 'bg-emerald-500 text-white' : ''
+            className={`px-3 py-2 border rounded-lg font-semibold transition ${
+              page === currentPage
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:text-blue-700'
             }`}
           >
             {page}

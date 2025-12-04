@@ -27,13 +27,13 @@ const CreateTopic = () => {
   const onSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-      const validVoteOptions = formData.vote_options.filter((opt) => opt.trim() != '');
+      const validVoteOptions = formData.vote_options.filter((opt) => opt.trim() !== '');
 
       if (new Set(validVoteOptions).size !== validVoteOptions.length) {
         Swal.fire({
           icon: 'warning',
           title: '중복된 투표 옵션',
-          text: '서로 다른 옵션을 입력해주세요.',
+          text: '서로 다른 옵션을 입력해 주세요.',
           confirmButtonColor: '#EF4444',
         });
         return;
@@ -42,7 +42,7 @@ const CreateTopic = () => {
         Swal.fire({
           icon: 'warning',
           title: '투표 옵션 부족',
-          text: '최소 2개 이상의 옵션이 필요합니다.',
+          text: '최소 2개 이상의 옵션이 필요해요.',
           confirmButtonColor: '#EF4444',
         });
         return;
@@ -56,16 +56,15 @@ const CreateTopic = () => {
         Swal.fire({
           icon: 'success',
           title: '토픽 생성 완료',
-          text: '토픽이 성공적으로 생성되었습니다.',
-          confirmButtonColor: '#10B981',
+          text: '토픽이 성공적으로 등록되었습니다.',
+          confirmButtonColor: '#2563EB',
         });
         navigate(`/topic/${result.topic_id}`);
       } catch (error) {
-        console.error('Error creating topic:', error);
         Swal.fire({
           icon: 'error',
           title: '토픽 생성 실패',
-          text: '다시 시도해주세요.',
+          text: '다시 시도해 주세요.',
           confirmButtonColor: '#EF4444',
         });
       }
@@ -86,7 +85,7 @@ const CreateTopic = () => {
       Swal.fire({
         icon: 'warning',
         title: '옵션 개수 초과',
-        text: '투표 옵션은 최대 4개까지만 가능합니다.',
+        text: '투표 옵션은 최대 4개까지 가능합니다.',
         confirmButtonColor: '#EF4444',
       });
       return;
@@ -106,8 +105,8 @@ const CreateTopic = () => {
 
   return (
     <div className="flex items-center justify-center px-4">
-      <div className="max-w-3xl w-full bg-white p-8 rounded-2xl shadow-xl">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">새로운 토픽 생성</h2>
+      <div className="max-w-3xl w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">새로운 토픽 만들기</h2>
         <form onSubmit={onSubmit} className="space-y-6">
           <FormField
             label="제목"
@@ -121,7 +120,7 @@ const CreateTopic = () => {
             name="description"
             value={formData.description}
             onChange={onChange}
-            placeholder="토픽에 대한 설명을 입력하세요"
+            placeholder="토픽을 설명해주세요"
           />
           <VoteOptionInputs
             formData={formData}
@@ -130,7 +129,7 @@ const CreateTopic = () => {
             onOptionChange={onOptionChange}
           />
           <CategorySelect categories={CATEGORIES} value={formData.category} onChange={onChange} />
-          <SubmitButton label="토픽 생성하기" />
+          <SubmitButton label="토픽 만들기" />
         </form>
       </div>
     </div>

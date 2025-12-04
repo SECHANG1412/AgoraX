@@ -6,7 +6,7 @@ const ProgressBar = ({ voteResults, totalVote }) => {
   let accumulated = 0;
 
   return (
-    <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-3">
+    <div className="relative w-full h-2 bg-gray-100 rounded-full overflow-hidden">
       {voteResults.map((count, idx) => {
         const width = totalVote > 0 ? (count / totalVote) * 100 : 0;
         const left = accumulated;
