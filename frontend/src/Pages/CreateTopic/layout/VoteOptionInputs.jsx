@@ -4,7 +4,7 @@ const VoteOptionInputs = ({ formData, onOptionAdd, onOptionRemove, onOptionChang
   const voteOptions = formData.vote_options;
   return (
     <div>
-      <label className='block text-sm font-semibold text-gray-700 mb-2"'>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
         투표 옵션 <span className="text-red-500">*</span>
       </label>
       {voteOptions.map((option, index) => (
@@ -15,7 +15,7 @@ const VoteOptionInputs = ({ formData, onOptionAdd, onOptionRemove, onOptionChang
             onChange={(e) => onOptionChange(index, e.target.value)}
             required
             placeholder={`옵션 ${index + 1}`}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
           {voteOptions.length > 1 && (
             <button
@@ -32,7 +32,7 @@ const VoteOptionInputs = ({ formData, onOptionAdd, onOptionRemove, onOptionChang
         <button
           type="button"
           onClick={onOptionAdd}
-          className="w-full py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all duration-200 mt-2"
+          className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 mt-2 font-semibold"
         >
           옵션 추가
         </button>

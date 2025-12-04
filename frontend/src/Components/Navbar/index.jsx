@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { FiSliders, FiBookmark } from 'react-icons/fi';
 import Logo from './layout/Logo';
 import DesktopAuthButtons from './auth/DesktopAuthButtons';
 import MobileMenu from './layout/MobileMenu';
 import MobileToggleButton from './layout/MobileToggleButton';
 import Categories from './layout/Categories';
 import SearchMenu from './layout/SearchMenu';
-import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Link } from 'react-router-dom';
 
 const Navbar = ({ onLoginClick, onSignupClick }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,11 +45,11 @@ const Navbar = ({ onLoginClick, onSignupClick }) => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200">
-      <div className="container mx-auto px-6 py-3">
-        <div className="flex items-center gap-4 h-16">
+    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
+      <div className="container mx-auto px-4 lg:px-6 py-2">
+        <div className="flex items-center gap-3">
           <Logo />
-          <div className="hidden lg:block flex-1 max-w-2xl ml-4">
+          <div className="w-full lg:w-1/2">
             <SearchMenu
               searchValue={searchInput}
               onSearchInputChange={(e) => setSearchInput(e.target.value)}
@@ -62,7 +62,7 @@ const Navbar = ({ onLoginClick, onSignupClick }) => {
                 to="/create-topic"
                 className="hidden lg:inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
-                토픽 생성
+                토픽 만들기
               </Link>
             )}
             <DesktopAuthButtons
@@ -78,15 +78,8 @@ const Navbar = ({ onLoginClick, onSignupClick }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between py-2">
+        <div className="mt-3">
           <Categories activeCategory={category} onClick={onCategoryClick} />
-          <div className="lg:hidden w-full max-w-md ml-4">
-            <SearchMenu
-              searchValue={searchInput}
-              onSearchInputChange={(e) => setSearchInput(e.target.value)}
-              onSearchSubmit={onSearchSubmit}
-            />
-          </div>
         </div>
       </div>
 

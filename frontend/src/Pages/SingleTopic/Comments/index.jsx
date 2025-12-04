@@ -97,13 +97,13 @@ const Comments = ({ topicId }) => {
   return (
     <div className="mt-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">
-        댓글 <span className="text-emerald-500">({comments.length})</span>
+        댓글 <span className="text-blue-600">({comments.length})</span>
       </h2>
       <textarea
         value={newComment}
         onChange={(e) => setNewComment(e.target.value)}
         placeholder={isLocked ? '로그인 후 댓글을 작성할 수 있습니다.' : '댓글을 작성해 주세요...'}
-        className="w-full p-4 border rounded-lg resize-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+        className="w-full p-4 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
         rows={3}
         disabled={isLocked}
       />
@@ -111,7 +111,7 @@ const Comments = ({ topicId }) => {
         <button
           onClick={onCreateComment}
           disabled={!newComment.trim() || loading || isLocked}
-          className="px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:bg-emerald-600/50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-500/60 disabled:cursor-not-allowed"
         >
           댓글 작성
         </button>

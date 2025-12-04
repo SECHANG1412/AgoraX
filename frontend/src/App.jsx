@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import LoginModal from './Components/Modal/LoginModal';
-import { AuthProvider, useAuth } from './hooks/useAuth';
 import SignupModal from './Components/Modal/SignupModal';
 import Footer from './Components/Footer/Footer';
 import Main from './Pages/Main';
 import CreateTopic from './Pages/CreateTopic';
-import Swal from 'sweetalert2';
 import SingleTopic from './Pages/SingleTopic';
 import Profile from './Pages/Profile';
+import Swal from 'sweetalert2';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isAuthLoading } = useAuth();
@@ -21,8 +21,8 @@ const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated) {
     Swal.fire({
       icon: 'warning',
-      title: '로그인 필요',
-      text: '로그인이 필요합니다. 로그인 후 이용해 주세요.',
+      title: '로그인이 필요해요',
+      text: '로그인 후 이용할 수 있는 메뉴입니다.',
       confirmButtonColor: '#2563EB',
     });
     return <Navigate to="/" replace />;
@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-const LootLayout = () => {
+const RootLayout = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
 
@@ -51,9 +51,9 @@ const LootLayout = () => {
 
   return (
     <AuthProvider>
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
         <Navbar onLoginClick={onLoginClick} onSignupClick={onSignupClick} />
-        <main className="flex-grow container mx-auto px-4 py-8">
+        <main className="flex-grow container mx-auto px-4 lg:px-6 py-8">
           <Outlet />
         </main>
         <Footer />
@@ -67,7 +67,7 @@ const LootLayout = () => {
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <LootLayout />,
+    element: <RootLayout />,
     children: [
       { index: true, element: <Main /> },
       {

@@ -24,7 +24,7 @@ export const useTopic = () => {
       }
       return null;
     } catch (error) {
-      showErrorAlert(error, '토픽을 불러올 수 없습니다.');
+      showErrorAlert(error, '토픽 목록을 불러오지 못했습니다.');
       return null;
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ export const useTopic = () => {
       }
       return null;
     } catch (error) {
-      showErrorAlert(error, '토픽을 불러올 수 없습니다.');
+      showErrorAlert(error, '토픽 수를 불러오지 못했습니다.');
       return null;
     } finally {
       setLoading(false);
@@ -82,13 +82,13 @@ export const useTopic = () => {
       const response = await api.post('/topics', topicData);
 
       if (response.status === 200) {
-        showSuccessAlert('토픽이 성공적으로 생성되었습니다.');
+        showSuccessAlert('토픽이 성공적으로 등록되었습니다.');
         return response.data;
       }
       return null;
     } catch (error) {
       if (await handleAuthError(error)) return null;
-      showErrorAlert(error, '토픽을 생성할 수 없습니다.');
+      showErrorAlert(error, '토픽 등록에 실패했습니다.');
       return null;
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export const useTopic = () => {
       }
       return null;
     } catch (error) {
-      showErrorAlert(error, '토픽을 불러올 수 없습니다.');
+      showErrorAlert(error, '토픽 정보를 불러오지 못했습니다.');
       return null;
     } finally {
       setLoading(false);

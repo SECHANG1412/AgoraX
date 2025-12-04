@@ -12,7 +12,7 @@ const CategorySelect = ({ categories, value, onChange }) => {
         value={value}
         onChange={onChange}
         required
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
       >
         <option value="" disabled>
           카테고리를 선택하세요

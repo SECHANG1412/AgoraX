@@ -19,7 +19,7 @@ const ReplyForm = ({ onSubmit, onCancel }) => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="답글을 입력하세요..."
-          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 resize-none text-sm"
+          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none text-sm"
           rows={2}
         />
         <div className="flex flex-col space-y-2">
@@ -28,7 +28,7 @@ const ReplyForm = ({ onSubmit, onCancel }) => {
             disabled={!content.trim()}
             className={`p-2 rounded-lg ${
               content.trim()
-                ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
