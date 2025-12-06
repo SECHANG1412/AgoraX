@@ -86,13 +86,13 @@ const DesktopAuthButtons = ({
         <div className="flex space-x-3">
           <button
             onClick={onLoginClick}
-            className="px-3 py-2 text-sm font-semibold text-gray-800 bg-white border border-gray-300 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-colors"
+            className="px-3 py-2 text-sm font-semibold text-gray-800 bg-white border border-gray-300 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-colors cursor-pointer"
           >
             로그인
           </button>
           <button
             onClick={onSignupClick}
-            className="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
           >
             가입하기
           </button>

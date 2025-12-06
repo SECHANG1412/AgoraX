@@ -63,6 +63,13 @@ class LikeCrud:
         return like
 
     @staticmethod
+    async def delete_comment_likes_by_comment_id(db: AsyncSession, comment_id: int):
+        result = await db.execute(select(CommentLike).where(CommentLike.comment_id == comment_id))
+        for like in result.scalars().all():
+            await db.delete(like)
+        await db.flush()
+
+    @staticmethod
     async def get_reply_like_by_user_and_reply(
         db: AsyncSession, user_id: int, reply_id: int
     ) -> ReplyLike | None:
@@ -89,6 +96,13 @@ class LikeCrud:
             await db.delete(like)
             await db.flush()
         return like
+
+    @staticmethod
+    async def delete_reply_likes_by_reply_id(db: AsyncSession, reply_id: int):
+        result = await db.execute(select(ReplyLike).where(ReplyLike.reply_id == reply_id))
+        for like in result.scalars().all():
+            await db.delete(like)
+        await db.flush()
 
     @staticmethod
     async def count_topic_likes(db: AsyncSession, topic_id: int) -> int:

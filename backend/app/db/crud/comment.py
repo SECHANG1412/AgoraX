@@ -33,6 +33,18 @@ class CommentCrud:
         return result.scalars().all()
 
     @staticmethod
+    async def count_by_topic_id(db: AsyncSession, topic_id: int) -> int:
+        result = await db.execute(select(Comment).filter(Comment.topic_id == topic_id))
+        return len(result.scalars().all())
+
+    @staticmethod
+    async def count_active_by_topic_id(db: AsyncSession, topic_id: int) -> int:
+        result = await db.execute(
+            select(Comment).filter(Comment.topic_id == topic_id, Comment.is_deleted == False)
+        )
+        return len(result.scalars().all())
+
+    @staticmethod
     async def delete_by_id(db: AsyncSession, comment_id: int):
         comment = await db.get(Comment, comment_id)
         if comment:

@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.crud import TopicCrud, VoteCrud, LikeCrud, PinnedTopicCrud
+from app.db.crud import TopicCrud, VoteCrud, LikeCrud, PinnedTopicCrud, CommentCrud, ReplyCrud
 from app.db.schemas.topics import TopicCreate, TopicRead
 from app.db.models import Topic
 
@@ -70,6 +70,8 @@ class TopicService:
         
         votes = await VoteCrud.get_all_by_topic_id(db, topic.topic_id)
         like_count = await LikeCrud.count_topic_likes(db, topic.topic_id)
+        comment_count = await CommentCrud.count_active_by_topic_id(db, topic.topic_id)
+        reply_count = await ReplyCrud.count_by_topic_id(db, topic.topic_id)
 
         vote_results = [0] * len(topic.vote_options)
         for vote in votes:
@@ -80,7 +82,8 @@ class TopicService:
             **topic.__dict__,
             vote_results=vote_results,
             total_vote=len(votes),
-            like_count=like_count)
+            like_count=like_count,
+            comment_count=comment_count + reply_count)
 
         if user_id is not None:
             vote = await VoteCrud.get_by_topic_and_user(db, topic.topic_id, user_id)

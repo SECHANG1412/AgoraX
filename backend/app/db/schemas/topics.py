@@ -35,3 +35,4 @@ class TopicRead(TopicInDB):
     like_count: int = 0
     has_liked: bool = False
     is_pinned: bool = False
+    comment_count: int = 0

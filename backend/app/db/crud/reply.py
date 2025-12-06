@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.db.models import Reply
+from sqlalchemy import func
+from app.db.models import Reply, Comment
 from app.db.schemas.replys import ReplyCreate, ReplyUpdate
 
 
@@ -29,6 +30,20 @@ class ReplyCrud:
     async def get_all_by_comment_id(db: AsyncSession, comment_id: int):
         result = await db.execute(select(Reply).filter(Reply.comment_id == comment_id))
         return result.scalars().all()
+
+    @staticmethod
+    async def count_by_comment_id(db: AsyncSession, comment_id: int) -> int:
+        result = await db.execute(select(func.count(Reply.reply_id)).where(Reply.comment_id == comment_id))
+        return result.scalar_one() or 0
+
+    @staticmethod
+    async def count_by_topic_id(db: AsyncSession, topic_id: int) -> int:
+        result = await db.execute(
+            select(func.count(Reply.reply_id)).join(Comment, Reply.comment_id == Comment.comment_id).where(
+                Comment.topic_id == topic_id
+            )
+        )
+        return result.scalar_one() or 0
 
     @staticmethod
     async def delete_by_id(db: AsyncSession, reply_id: int):

@@ -3,6 +3,8 @@ import api from '../utils/api';
 import { handleAuthError, showErrorAlert, showSuccessAlert } from '../utils/alertUtils';
 
 export const useComment = () => {
+  const isSuccess = (status) => status >= 200 && status < 300;
+
   const createComment = useCallback(async (topicId, content) => {
     try {
       const response = await api.post(`/comments`, {
@@ -10,14 +12,14 @@ export const useComment = () => {
         content,
       });
 
-      if (response.status === 200) {
+      if (isSuccess(response.status)) {
         showSuccessAlert('댓글이 등록되었습니다.');
         return response.data;
       }
       return null;
     } catch (error) {
       if (await handleAuthError(error)) return null;
-      showErrorAlert(error, '댓글 작성에 실패했습니다.');
+      showErrorAlert(error, '댓글 생성에 실패했습니다.');
       return null;
     }
   }, []);
@@ -26,12 +28,11 @@ export const useComment = () => {
     try {
       const response = await api.get(`/comments/by-topic/${topicId}`);
 
-      if (response.status === 200) {
+      if (isSuccess(response.status)) {
         return response.data;
-      } else {
-        showErrorAlert(new Error('데이터 에러'), '댓글을 불러오지 못했습니다.');
-        return null;
       }
+      showErrorAlert(new Error('API 오류'), '댓글을 불러오지 못했습니다.');
+      return null;
     } catch (error) {
       if (await handleAuthError(error)) return;
       showErrorAlert(error, '댓글을 불러오지 못했습니다.');
@@ -43,13 +44,12 @@ export const useComment = () => {
     try {
       const response = await api.delete(`/comments/${commentId}`);
 
-      if (response.status === 200) {
+      if (isSuccess(response.status)) {
         showSuccessAlert('댓글이 삭제되었습니다.');
         return true;
-      } else {
-        showErrorAlert(new Error('데이터 에러'), '댓글 삭제에 실패했습니다.');
-        return false;
       }
+      showErrorAlert(new Error('API 오류'), '댓글 삭제에 실패했습니다.');
+      return false;
     } catch (error) {
       if (await handleAuthError(error)) return;
       showErrorAlert(error, '댓글 삭제에 실패했습니다.');
@@ -61,7 +61,7 @@ export const useComment = () => {
     try {
       const response = await api.put(`/comments/${commentId}`, { content });
 
-      if (response.status === 200) {
+      if (isSuccess(response.status)) {
         showSuccessAlert('댓글이 수정되었습니다.');
         return response.data;
       }

@@ -19,6 +19,7 @@ class CommentUpdate(BaseModel):
 class CommentInDB(CommentBase):
     comment_id: int
     user_id: int
+    is_deleted: bool = False
     created_at: datetime
 
     class Config:

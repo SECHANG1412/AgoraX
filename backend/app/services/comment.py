@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-from app.db.crud import CommentCrud, UserCrud, LikeCrud, TopicCrud
+from app.db.crud import CommentCrud, UserCrud, LikeCrud, TopicCrud, ReplyCrud
 from app.db.models import Comment
 from app.db.schemas.comments import CommentRead, CommentCreate, CommentUpdate
 from app.services.reply import ReplyService
@@ -47,9 +47,23 @@ class CommentService:
         if comment.user_id != user_id:
             raise HTTPException(status_code=403, detail="Not your comment")
         try:
-            deleted = await CommentCrud.delete_by_id(db, comment_id)
-            await db.commit()
-            return await CommentService._build_comment_read(db,deleted, user_id)
+            replies = await ReplyCrud.get_all_by_comment_id(db, comment_id)
+
+            if replies:
+                # Has replies: soft delete to preserve thread context.
+                await LikeCrud.delete_comment_likes_by_comment_id(db, comment_id)
+                comment.content = "삭제된 댓글입니다."
+                comment.is_deleted = True
+                await db.flush()
+                await db.commit()
+                await db.refresh(comment)
+                return await CommentService._build_comment_read(db, comment, user_id)
+            else:
+                # No replies: hard delete with related likes.
+                await LikeCrud.delete_comment_likes_by_comment_id(db, comment_id)
+                deleted = await CommentCrud.delete_by_id(db, comment_id)
+                await db.commit()
+                return await CommentService._build_comment_read(db, deleted, user_id)
         except Exception:
             await db.rollback()
             raise
@@ -77,6 +91,7 @@ class CommentService:
             user_id=comment.user_id,
             topic_id=comment.topic_id,
             content=comment.content,
+            is_deleted=comment.is_deleted,
             created_at=comment.created_at,
             username=user.username,
             replies=replies,

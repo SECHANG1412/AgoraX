@@ -1,33 +1,41 @@
 import React, { useState } from 'react';
-import { FiSend, FiX } from "react-icons/fi";
+import { FiSend, FiX } from 'react-icons/fi';
 
-const ReplyForm = ({ onSubmit, onCancel }) => {
-  const [content, setContent] = useState('');
+const ReplyForm = ({ onSubmit, onCancel, lockedPrefix = '' }) => {
+  const prefix = lockedPrefix?.trim() || '';
+  const [body, setBody] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmed = content.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed);
-    setContent('');
+    const trimmedBody = body.trim();
+    if (!trimmedBody) return;
+
+    const payload = prefix ? `${prefix} ${trimmedBody}` : trimmedBody;
+    onSubmit(payload);
+    setBody('');
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 mb-2">
-      <div className="flex items-center space-x-2">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="답글을 입력하세요..."
-          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none text-sm"
-          rows={2}
+    <form onSubmit={handleSubmit} className="mt-3 mb-2">
+      <div className="flex items-center gap-3">
+        {prefix ? (
+          <span className="px-2 py-1 text-blue-600 font-semibold text-sm bg-blue-50 border border-blue-100 rounded">
+            {prefix}
+          </span>
+        ) : null}
+        <input
+          type="text"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="대댓글을 입력하세요.."
+          className="flex-1 h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
         />
-        <div className="flex flex-col space-y-2">
+        <div className="flex items-center gap-2">
           <button
             type="submit"
-            disabled={!content.trim()}
+            disabled={!body.trim()}
             className={`p-2 rounded-lg ${
-              content.trim()
+              body.trim()
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}

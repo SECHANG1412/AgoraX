@@ -13,6 +13,7 @@ class Comment(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.topic_id"), nullable=False)
     content: Mapped[str] = mapped_column(String(500), nullable=False)
+    is_deleted: Mapped[bool] = mapped_column(default=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP, server_default=func.now(), nullable=False
     )

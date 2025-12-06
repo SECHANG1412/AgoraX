@@ -39,7 +39,15 @@ const EditableContent = ({
     );
   }
 
-  return <p className={`mt-1 text-gray-800 whitespace-pre-wrap ${isReply ? 'text-sm' : ''}`}>{content}</p>;
+  const mentionPrefix = content.startsWith('@') ? content.split(/\s+/)[0] : null;
+  const restContent = mentionPrefix ? content.slice(mentionPrefix.length) : content;
+
+  return (
+    <p className={`mt-1 text-gray-800 whitespace-pre-wrap ${isReply ? 'text-sm' : ''}`}>
+      {mentionPrefix ? <span className="text-blue-600 font-semibold">{mentionPrefix}</span> : null}
+      {restContent}
+    </p>
+  );
 };
 
 export default EditableContent;
