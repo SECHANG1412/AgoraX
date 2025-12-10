@@ -1,7 +1,7 @@
 """Add parent_reply_id to replies for nested threading
 
 Revision ID: 20251206_01
-Revises: None
+Revises: 20251210_00_init
 Create Date: 2025-12-06
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "20251206_01"
-down_revision = None
+down_revision = "20251210_00_init"
 branch_labels = None
 depends_on = None
 

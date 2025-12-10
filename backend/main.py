@@ -18,8 +18,6 @@ load_dotenv(dotenv_path=".env")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
     yield
     await async_engine.dispose()
 
