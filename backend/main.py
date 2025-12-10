@@ -7,8 +7,9 @@ from fastapi.concurrency import asynccontextmanager
 from app.db.database import Base, async_engine
 from app.db import models  # ensure all models (including new ones) are registered
 from app.routers import user, topic, vote, comment, reply, like, oauth
-from app.middleware.token_refresh import TokenRefreshMiddleware
 from app.middleware.admin_auth import AdminBasicAuthMiddleware
+from app.middleware.token_refresh import TokenRefreshMiddleware
+from app.middleware.csrf import CSRFMiddleware
 from app.admin.setup import setup_admin
 from app.core.settings import settings
 
@@ -50,6 +51,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# CSRF should run before token refresh to ensure requests are validated early
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(TokenRefreshMiddleware)
 
 app.include_router(user.router)

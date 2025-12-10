@@ -1,3 +1,4 @@
+import secrets
 from fastapi import Request, Response, HTTPException
 from jwt import ExpiredSignatureError, InvalidTokenError
 from app.core.settings import settings
@@ -30,6 +31,7 @@ def _cookie_policy() -> dict:
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    csrf_token = secrets.token_hex(32)  # 32 bytes => 64 hex chars
     policy = _cookie_policy()
     response.set_cookie(
         key="access_token",
@@ -42,6 +44,14 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         key="refresh_token",
         value=refresh_token,
         httponly=True,
+        max_age=int(settings.refresh_token_expire.total_seconds()),
+        **policy,
+    )
+    # CSRF cookie is readable by JS (not HttpOnly) for double-submit pattern
+    response.set_cookie(
+        key="csrf_token",
+        value=csrf_token,
+        httponly=False,
         max_age=int(settings.refresh_token_expire.total_seconds()),
         **policy,
     )
