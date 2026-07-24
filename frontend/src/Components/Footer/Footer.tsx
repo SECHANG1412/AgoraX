@@ -19,7 +19,7 @@ const Footer = () => {
             </p>
           </div>
 
-          <nav className="flex flex-col" aria-label="Footer quick links">
+          <nav className="flex flex-col" aria-label="푸터 바로가기">
             <h3 className="mb-3 text-base font-semibold text-gray-900">Quick Links</h3>
             <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm leading-6 text-gray-600">
               {quickLinks.map(({ label, url }) => (
