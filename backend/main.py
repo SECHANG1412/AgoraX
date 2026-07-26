@@ -16,6 +16,7 @@ from app.routers import (
     notification,
     oauth,
     reply,
+    report,
     topic,
     user,
     vote,
@@ -91,6 +92,7 @@ app.include_router(like.router)
 app.include_router(inquiry.router)
 app.include_router(admin.router)
 app.include_router(notification.router)
+app.include_router(report.router)
 
 
 @app.get("/metrics")
