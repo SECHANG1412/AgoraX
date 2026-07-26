@@ -92,6 +92,7 @@ const Contact = () => {
             <input
               value={user?.username || ''}
               readOnly
+              autoComplete="name"
               className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
               aria-label="문의 작성자 이름"
             />
@@ -103,6 +104,7 @@ const Contact = () => {
               type="email"
               value={user?.email || ''}
               readOnly
+              autoComplete="email"
               className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
               aria-label="문의 작성자 이메일"
             />
@@ -113,6 +115,7 @@ const Contact = () => {
           <span className="text-sm font-semibold text-slate-700">제목</span>
           <input
             name="title"
+            autoComplete="off"
             value={formData.title}
             onChange={handleChange}
             required
@@ -126,6 +129,7 @@ const Contact = () => {
           <span className="text-sm font-semibold text-slate-700">문의 내용</span>
           <textarea
             name="content"
+            autoComplete="off"
             value={formData.content}
             onChange={handleChange}
             required
