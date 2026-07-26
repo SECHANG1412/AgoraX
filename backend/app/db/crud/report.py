@@ -106,3 +106,9 @@ class ReportCrud:
                 resolution=resolution,
             )
         )
+    @staticmethod
+    async def get_by_id_for_update(db: AsyncSession, report_id: int) -> Report | None:
+        result = await db.execute(
+            select(Report).where(Report.report_id == report_id).with_for_update()
+        )
+        return result.scalar_one_or_none()

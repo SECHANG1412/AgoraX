@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -5,6 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.crud import CommentCrud, ReplyCrud, TopicCrud, UserCrud
 from app.db.crud.report import ReportCrud
 from app.db.schemas.reports import ReportCreate, ReportRead
+from app.db.schemas.comments import CommentModerationUpdate
+from app.db.schemas.reports import ReportAdminRead, ReportResolutionUpdate
+from app.db.schemas.topics import TopicModerationUpdate
+from app.services.admin_action_log import AdminActionLogService
+from app.services.comment import CommentService
+from app.services.notification import NotificationService
+from app.services.reply import ReplyService
+from app.services.topic import TopicService
+
 
 
 class ReportService:
@@ -86,3 +97,213 @@ class ReportService:
             "comment_id": reply.comment_id,
             "created_at": reply.created_at.isoformat(),
         }
+    @staticmethod
+    async def get_all_for_admin(
+        db: AsyncSession,
+        *,
+        status: str | None = None,
+        target_type: str | None = None,
+        start_at=None,
+        end_at=None,
+    ) -> list[ReportAdminRead]:
+        reports = await ReportCrud.get_all_for_admin(
+            db,
+            status=status,
+            target_type=target_type,
+            start_at=start_at,
+            end_at=end_at,
+        )
+        users = await UserCrud.get_by_ids(
+            db, list({report.reporter_user_id for report in reports})
+        )
+        counts = await ReportCrud.count_by_targets(
+            db, list({(report.target_type, report.target_id) for report in reports})
+        )
+        return [
+            ReportAdminRead.model_validate(
+                {
+                    **report.__dict__,
+                    "reporter_name": users[report.reporter_user_id].username,
+                    "report_count": counts.get((report.target_type, report.target_id), 1),
+                }
+            )
+            for report in reports
+        ]
+
+    @staticmethod
+    async def resolve_for_admin(
+        db: AsyncSession,
+        report_id: int,
+        update: ReportResolutionUpdate,
+        admin_user_id: int,
+    ) -> ReportAdminRead:
+        report = await ReportService._get_pending_for_update(db, report_id)
+        related_reports = await ReportService._get_related_pending_reports(db, report)
+        try:
+            if report.target_type == "topic":
+                await TopicService.delete_for_admin(
+                    db,
+                    report.target_id,
+                    TopicModerationUpdate(reason=update.resolution),
+                    admin_user_id,
+                    commit=False,
+                )
+            elif report.target_type == "comment":
+                await CommentService.delete_for_admin(
+                    db,
+                    report.target_id,
+                    CommentModerationUpdate(reason=update.resolution),
+                    admin_user_id,
+                    commit=False,
+                )
+            else:
+                await ReplyService.delete_for_admin(
+                    db,
+                    report.target_id,
+                    update.resolution,
+                    admin_user_id,
+                    commit=False,
+                )
+
+            now = datetime.now(timezone.utc)
+            for related in related_reports:
+                await ReportService._notify_reporter(
+                    db, related, admin_user_id, "신고한 콘텐츠가 운영정책 위반으로 처리되었습니다."
+                )
+                await ReportCrud.resolve_target_reports(
+                    db,
+                    target_type=related.target_type,
+                    target_id=related.target_id,
+                    status="resolved",
+                    handled_by=admin_user_id,
+                    handled_at=now,
+                    resolution=update.resolution,
+                )
+            await AdminActionLogService.record(
+                db,
+                admin_user_id=admin_user_id,
+                action="RESOLVE_REPORT",
+                target_type="Report",
+                target_id=report_id,
+                before_value={"status": "pending"},
+                after_value={"status": "resolved", "target_deleted": True},
+                reason=update.resolution,
+            )
+            await db.commit()
+            await db.refresh(report)
+            return await ReportService._build_admin_read(db, report)
+        except Exception:
+            await db.rollback()
+            raise
+
+    @staticmethod
+    async def dismiss_for_admin(
+        db: AsyncSession,
+        report_id: int,
+        update: ReportResolutionUpdate,
+        admin_user_id: int,
+    ) -> ReportAdminRead:
+        report = await ReportService._get_pending_for_update(db, report_id)
+        reports = await ReportCrud.get_all_for_admin(db, status="pending")
+        matching = [
+            item for item in reports
+            if item.target_type == report.target_type and item.target_id == report.target_id
+        ]
+        try:
+            now = datetime.now(timezone.utc)
+            for item in matching:
+                await ReportService._notify_reporter(
+                    db, item, admin_user_id, "신고한 콘텐츠를 검토했으나 운영정책 위반으로 판단되지 않았습니다."
+                )
+            await ReportCrud.resolve_target_reports(
+                db,
+                target_type=report.target_type,
+                target_id=report.target_id,
+                status="dismissed",
+                handled_by=admin_user_id,
+                handled_at=now,
+                resolution=update.resolution,
+            )
+            await AdminActionLogService.record(
+                db,
+                admin_user_id=admin_user_id,
+                action="DISMISS_REPORT",
+                target_type="Report",
+                target_id=report_id,
+                before_value={"status": "pending"},
+                after_value={"status": "dismissed"},
+                reason=update.resolution,
+            )
+            await db.commit()
+            await db.refresh(report)
+            return await ReportService._build_admin_read(db, report)
+        except Exception:
+            await db.rollback()
+            raise
+
+    @staticmethod
+    async def _get_pending_for_update(db: AsyncSession, report_id: int):
+        report = await ReportCrud.get_by_id_for_update(db, report_id)
+        if not report:
+            raise HTTPException(status_code=404, detail="Report not found")
+        if report.status != "pending":
+            raise HTTPException(status_code=409, detail="Report already handled")
+        return report
+
+    @staticmethod
+    async def _get_related_pending_reports(db: AsyncSession, report):
+        pending = await ReportCrud.get_all_for_admin(db, status="pending")
+        if report.target_type == "topic":
+            topic_id = report.target_id
+            return [item for item in pending if item.target_snapshot.get("topic_id") == topic_id]
+        if report.target_type == "comment":
+            comment_id = report.target_id
+            return [
+                item for item in pending
+                if item.target_id == comment_id and item.target_type == "comment"
+                or item.target_type == "reply" and item.target_snapshot.get("comment_id") == comment_id
+            ]
+
+        comment_id = report.target_snapshot.get("comment_id")
+        replies = await ReplyCrud.get_all_by_comment_id(db, comment_id) if comment_id else []
+        children_by_parent: dict[int, list[int]] = {}
+        for reply in replies:
+            if reply.parent_reply_id is not None:
+                children_by_parent.setdefault(reply.parent_reply_id, []).append(reply.reply_id)
+        target_ids = {report.target_id}
+        stack = [report.target_id]
+        while stack:
+            children = children_by_parent.get(stack.pop(), [])
+            target_ids.update(children)
+            stack.extend(children)
+        return [item for item in pending if item.target_type == "reply" and item.target_id in target_ids]
+
+    @staticmethod
+    async def _notify_reporter(
+        db: AsyncSession, report, admin_user_id: int, message: str
+    ) -> None:
+        await NotificationService.create_if_not_self(
+            db,
+            user_id=report.reporter_user_id,
+            type="report_status",
+            actor_user_id=admin_user_id,
+            target_type="Report",
+            target_id=report.report_id,
+            topic_id=report.target_snapshot.get("topic_id"),
+            message=message,
+            link="/profile",
+        )
+
+    @staticmethod
+    async def _build_admin_read(db: AsyncSession, report) -> ReportAdminRead:
+        reporter = await UserCrud.get_by_id(db, report.reporter_user_id)
+        counts = await ReportCrud.count_by_targets(
+            db, [(report.target_type, report.target_id)]
+        )
+        return ReportAdminRead.model_validate(
+            {
+                **report.__dict__,
+                "reporter_name": reporter.username if reporter else "탈퇴한 사용자",
+                "report_count": counts.get((report.target_type, report.target_id), 1),
+            }
+        )

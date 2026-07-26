@@ -4,6 +4,8 @@ from app.db.models import Reply
 from app.db.crud import UserCrud, ReplyCrud, LikeCrud, CommentCrud
 from app.db.schemas.replys import ReplyRead, ReplyCreate, ReplyUpdate
 from app.services.notification import NotificationService
+from app.db.schemas.admin import AdminDeleteResponse
+from app.services.admin_action_log import AdminActionLogService
 
 
 class ReplyService:
@@ -185,3 +187,58 @@ class ReplyService:
             like_count=reply_like_count,
             has_liked=has_liked,
         )
+    @staticmethod
+    async def delete_for_admin(
+        db: AsyncSession,
+        reply_id: int,
+        reason: str,
+        admin_user_id: int,
+        *,
+        commit: bool = True,
+    ) -> AdminDeleteResponse:
+        reply = await ReplyCrud.get_by_id(db, reply_id)
+        if not reply:
+            raise HTTPException(status_code=404, detail="Reply not found")
+        comment = await CommentCrud.get_by_id(db, reply.comment_id)
+        author = await UserCrud.get_by_id(db, reply.user_id)
+        snapshot = {
+            "content": reply.content,
+            "author_id": reply.user_id,
+            "author_name": author.username if author else None,
+            "comment_id": reply.comment_id,
+            "topic_id": comment.topic_id if comment else None,
+            "parent_reply_id": reply.parent_reply_id,
+            "created_at": reply.created_at.isoformat(),
+        }
+        try:
+            await LikeCrud.delete_reply_likes_by_reply_id(db, reply_id)
+            await AdminActionLogService.record(
+                db,
+                admin_user_id=admin_user_id,
+                action="DELETE_REPLY",
+                target_type="Reply",
+                target_id=reply_id,
+                before_value=snapshot,
+                after_value={"deleted": True},
+                reason=reason,
+            )
+            await NotificationService.create_if_not_self(
+                db,
+                user_id=reply.user_id,
+                type="content_moderation",
+                actor_user_id=admin_user_id,
+                target_type="Reply",
+                target_id=reply_id,
+                topic_id=comment.topic_id if comment else None,
+                message="작성한 답글이 관리자에 의해 삭제되었습니다.",
+                link="/profile",
+            )
+            await ReplyCrud.delete_by_id(db, reply_id)
+            if commit:
+                await db.commit()
+            else:
+                await db.flush()
+            return AdminDeleteResponse(deleted=True)
+        except Exception:
+            await db.rollback()
+            raise
