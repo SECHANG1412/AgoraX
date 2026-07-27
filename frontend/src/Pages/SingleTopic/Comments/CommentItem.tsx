@@ -6,6 +6,7 @@ import { useAuth } from '../../../hooks/auth-context';
 import { formatDateTime } from '../../../utils/date';
 import type { CommentRead, ReplyRead } from '../../../types';
 import type { CommentItemActions } from '.';
+import ReportButton from '../../../Components/Common/ReportButton';
 
 type CommentTreeItem = (CommentRead | ReplyRead) & {
   is_deleted?: boolean;
@@ -108,6 +109,13 @@ const CommentItem = ({ item, isReply = false, actions, refresh, depth = 0 }: Com
                 onEditClick={isOwner && !item.is_deleted ? () => setIsEditing(true) : undefined}
                 onDeleteClick={isOwner ? onDelete : undefined}
                 hideOwnerActions={!isOwner || item.is_deleted}
+                reportAction={!isOwner && !item.is_deleted ? (
+                  <ReportButton
+                    targetType={isReply ? 'reply' : 'comment'}
+                    targetId={id}
+                    compact
+                  />
+                ) : null}
               />
             </div>
           </div>

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { FaEdit, FaHeart, FaRegComment, FaTrash } from 'react-icons/fa';
 
 type CommentActionsProps = {
@@ -8,6 +9,7 @@ type CommentActionsProps = {
   onEditClick?: () => void;
   onDeleteClick?: () => void | Promise<void>;
   hideOwnerActions?: boolean;
+  reportAction?: ReactNode;
 };
 
 const CommentActions = ({
@@ -18,6 +20,7 @@ const CommentActions = ({
   onEditClick,
   onDeleteClick,
   hideOwnerActions = false,
+  reportAction,
 }: CommentActionsProps) => {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-gray-500 sm:gap-2">
@@ -41,6 +44,8 @@ const CommentActions = ({
       >
         <FaRegComment className="h-4 w-4" />
       </button>
+
+      {reportAction}
 
       {!hideOwnerActions && (
         <>

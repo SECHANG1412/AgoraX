@@ -15,6 +15,7 @@ import Header from './layout/Header';
 import InfoBar from './layout/InfoBar';
 import VoteButtons from './layout/VoteButtons';
 import type { TopicRead } from '../../types';
+import ReportButton from '../../Components/Common/ReportButton';
 
 const Chart = lazy(() => import('./Chart'));
 
@@ -218,7 +219,9 @@ const SingleTopic = () => {
                 >
                   {COMMON_MESSAGES.delete}
                 </button>
-              ) : null
+              ) : (
+                <ReportButton targetType="topic" targetId={topic.topic_id} />
+              )
             }
           />
 
