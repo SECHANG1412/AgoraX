@@ -1,3 +1,5 @@
+import { formatExpirationDateTime } from '../expiration';
+
 type ExpirationPreset = '1d' | '3d' | '7d' | '14d' | 'custom';
 
 type ExpirationSelectProps = {
@@ -33,6 +35,7 @@ const ExpirationSelect = ({
   const [selectedHour = '23', selectedMinute = '59'] = timeValue.split(':');
   const onHourChange = (hour: string) => onTimeChange(`${hour}:${selectedMinute}`);
   const onMinuteChange = (minute: string) => onTimeChange(`${selectedHour}:${minute}`);
+  const formattedExpiration = formatExpirationDateTime(`${dateValue}T${timeValue}`);
 
   return (
     <div>
@@ -105,6 +108,13 @@ const ExpirationSelect = ({
           </select>
         </div>
       </div>
+
+      {formattedExpiration && (
+        <div className={'mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3'}>
+          <p className={'text-xs font-semibold text-slate-500'}>{'\uB9C8\uAC10 \uC608\uC815'}</p>
+          <p className={'mt-1 text-sm font-semibold text-slate-900'}>{formattedExpiration}</p>
+        </div>
+      )}
 
       <p className="mt-1.5 text-xs text-slate-500">
         기본값은 7일 뒤 23:59입니다. 마감 시간이 지나면 투표가 자동으로 종료되고 결과만 볼 수 있습니다.
