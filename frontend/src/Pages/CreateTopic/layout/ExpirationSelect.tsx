@@ -114,26 +114,26 @@ const ExpirationSelect = ({
       {formattedExpiration && (
         <div
           aria-live={'polite'}
-          className={`mt-3 rounded-lg border px-4 py-3 ${
+          className={`mt-3 rounded-lg border px-3 py-3 sm:px-4 ${
             isInvalid ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-50'
           }`}
         >
           <p className={`text-xs font-semibold ${isInvalid ? 'text-red-600' : 'text-slate-500'}`}>
-            {'\uB9C8\uAC10 \uC608\uC815'}
+            마감 예정
           </p>
-          <p className={`mt-1 text-sm font-semibold ${isInvalid ? 'text-red-700' : 'text-slate-900'}`}>
+          <p className={`mt-1 break-keep text-sm font-semibold leading-6 ${isInvalid ? 'text-red-700' : 'text-slate-900'}`}>
             {formattedExpiration}
           </p>
           {isInvalid && (
             <p className={'mt-1.5 text-xs font-medium text-red-600'}>
-              {'\uD604\uC7AC \uC2DC\uAC01 \uC774\uD6C4\uB85C \uB9C8\uAC10 \uC77C\uC2DC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.'}
+              현재 시각 이후로 마감 일시를 선택해 주세요.
             </p>
           )}
         </div>
       )}
 
       <p className="mt-1.5 text-xs text-slate-500">
-        기본값은 7일 뒤 23:59입니다. 마감 시간이 지나면 투표가 자동으로 종료되고 결과만 볼 수 있습니다.
+        마감 후에는 추가로 투표할 수 없으며 결과만 확인할 수 있습니다.
       </p>
     </div>
   );
