@@ -318,3 +318,53 @@ export type AdminActionLogListParams = AdminDateRangeParams & {
   target_type?: AdminTargetType;
   admin_user_id?: string;
 };
+
+export type ReportTargetType = 'topic' | 'comment' | 'reply';
+
+export type ReportReason =
+  | 'abuse'
+  | 'hate'
+  | 'sexual'
+  | 'spam'
+  | 'privacy'
+  | 'misinformation'
+  | 'other';
+
+export type ReportStatus = 'pending' | 'resolved' | 'dismissed';
+
+export type ReportCreateRequest = {
+  target_type: ReportTargetType;
+  target_id: Id;
+  reason: ReportReason;
+  detail: string | null;
+};
+
+export type ReportRead = ReportCreateRequest & {
+  report_id: Id;
+  reporter_user_id: Id;
+  status: ReportStatus;
+  handled_by: Id | null;
+  handled_at: ISODateTimeString | null;
+  resolution: string | null;
+  created_at: ISODateTimeString;
+};
+
+export type ReportTargetSnapshot = {
+  author_id: Id;
+  author_name: string | null;
+  title: string;
+  content: string | null;
+  topic_id: Id;
+  comment_id?: Id;
+  created_at: ISODateTimeString;
+};
+
+export type ReportAdminRead = ReportRead & {
+  target_snapshot: ReportTargetSnapshot;
+  reporter_name: string;
+  report_count: number;
+};
+
+export type ReportResolutionRequest = {
+  resolution: string;
+};
