@@ -5,6 +5,7 @@ type ExpirationPreset = '1d' | '3d' | '7d' | '14d' | 'custom';
 type ExpirationSelectProps = {
   dateValue: string;
   timeValue: string;
+  isInvalid: boolean;
   preset: ExpirationPreset;
   minDate: string;
   onPresetChange: (preset: ExpirationPreset) => void;
@@ -26,6 +27,7 @@ const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, index) => String(index).pa
 const ExpirationSelect = ({
   dateValue,
   timeValue,
+  isInvalid,
   preset,
   minDate,
   onPresetChange,
@@ -110,9 +112,23 @@ const ExpirationSelect = ({
       </div>
 
       {formattedExpiration && (
-        <div className={'mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3'}>
-          <p className={'text-xs font-semibold text-slate-500'}>{'\uB9C8\uAC10 \uC608\uC815'}</p>
-          <p className={'mt-1 text-sm font-semibold text-slate-900'}>{formattedExpiration}</p>
+        <div
+          aria-live={'polite'}
+          className={`mt-3 rounded-lg border px-4 py-3 ${
+            isInvalid ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-50'
+          }`}
+        >
+          <p className={`text-xs font-semibold ${isInvalid ? 'text-red-600' : 'text-slate-500'}`}>
+            {'\uB9C8\uAC10 \uC608\uC815'}
+          </p>
+          <p className={`mt-1 text-sm font-semibold ${isInvalid ? 'text-red-700' : 'text-slate-900'}`}>
+            {formattedExpiration}
+          </p>
+          {isInvalid && (
+            <p className={'mt-1.5 text-xs font-medium text-red-600'}>
+              {'\uD604\uC7AC \uC2DC\uAC01 \uC774\uD6C4\uB85C \uB9C8\uAC10 \uC77C\uC2DC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.'}
+            </p>
+          )}
         </div>
       )}
 

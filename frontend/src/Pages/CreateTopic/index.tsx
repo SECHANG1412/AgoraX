@@ -44,6 +44,8 @@ const CreateTopic = () => {
   }, []);
 
   const minExpirationDate = toDateInputValue(new Date());
+  const expirationDate = new Date(formData.expires_at);
+  const isExpirationInvalid = Number.isNaN(expirationDate.getTime()) || expirationDate <= new Date();
 
   const onExpirationPresetChange = useCallback((preset: ExpirationPreset) => {
     setExpirationPreset(preset);
@@ -144,6 +146,7 @@ const CreateTopic = () => {
           <ExpirationSelect
             dateValue={formData.expires_at.split('T')[0] || ''}
             timeValue={expirationTime}
+            isInvalid={isExpirationInvalid}
             preset={expirationPreset}
             minDate={minExpirationDate}
             onPresetChange={onExpirationPresetChange}
