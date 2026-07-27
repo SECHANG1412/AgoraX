@@ -146,6 +146,8 @@ class CommentService:
         comment_id: int,
         update: CommentModerationUpdate,
         admin_user_id: int,
+        *,
+        commit: bool = True,
     ) -> AdminDeleteResponse:
         comment = await CommentCrud.get_by_id(db, comment_id)
         if not comment:
@@ -183,7 +185,10 @@ class CommentService:
                 link="/profile",
             )
             await CommentCrud.delete_by_id(db, comment_id)
-            await db.commit()
+            if commit:
+                await db.commit()
+            else:
+                await db.flush()
             return AdminDeleteResponse(deleted=True)
         except Exception:
             await db.rollback()

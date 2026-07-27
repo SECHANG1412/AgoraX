@@ -145,6 +145,8 @@ class TopicService:
         topic_id: int,
         update: TopicModerationUpdate,
         admin_user_id: int,
+        *,
+        commit: bool = True,
     ) -> AdminDeleteResponse:
         topic = await TopicCrud.get_by_id(db, topic_id)
         if not topic:
@@ -184,7 +186,10 @@ class TopicService:
                 link="/profile",
             )
             deleted = await TopicCrud.delete_by_id(db, topic_id)
-            await db.commit()
+            if commit:
+                await db.commit()
+            else:
+                await db.flush()
             return AdminDeleteResponse(deleted=deleted)
         except Exception:
             await db.rollback()

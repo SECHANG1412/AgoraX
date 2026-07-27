@@ -9,6 +9,7 @@ from app.db.schemas.admin import AdminDeleteResponse, AdminMeResponse
 from app.db.schemas.admin_action_logs import AdminActionLogRead
 from app.db.schemas.comments import CommentAdminRead, CommentModerationUpdate
 from app.db.schemas.inquiries import InquiryDeleteUpdate, InquiryRead, InquiryStatusUpdate
+from app.db.schemas.reports import ReportAdminRead, ReportResolutionUpdate
 from app.db.schemas.notifications import ClosedTopicNotificationDispatchResponse
 from app.db.schemas.topics import TopicAdminRead, TopicModerationUpdate
 from app.db.schemas.users import UserRead
@@ -17,6 +18,7 @@ from app.services import (
     CommentService,
     InquiryService,
     NotificationService,
+    ReportService,
     TopicService,
     UserService,
 )
@@ -171,3 +173,43 @@ async def delete_comment_for_admin(
     db: AsyncSession = Depends(get_db),
 ):
     return await CommentService.delete_for_admin(db, comment_id, update, admin_user_id)
+@router.get("/reports", response_model=list[ReportAdminRead])
+async def list_reports_for_admin(
+    _admin_user_id: int = Depends(require_admin_user_id),
+    db: AsyncSession = Depends(get_db),
+    status: str | None = None,
+    target_type: str | None = None,
+    start_at: datetime | None = None,
+    end_at: datetime | None = None,
+):
+    return await ReportService.get_all_for_admin(
+        db,
+        status=status,
+        target_type=target_type,
+        start_at=start_at,
+        end_at=end_at,
+    )
+
+
+@router.patch("/reports/{report_id}/resolve", response_model=ReportAdminRead)
+async def resolve_report_for_admin(
+    report_id: int,
+    update: ReportResolutionUpdate,
+    admin_user_id: int = Depends(require_admin_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    return await ReportService.resolve_for_admin(
+        db, report_id, update, admin_user_id
+    )
+
+
+@router.patch("/reports/{report_id}/dismiss", response_model=ReportAdminRead)
+async def dismiss_report_for_admin(
+    report_id: int,
+    update: ReportResolutionUpdate,
+    admin_user_id: int = Depends(require_admin_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    return await ReportService.dismiss_for_admin(
+        db, report_id, update, admin_user_id
+    )

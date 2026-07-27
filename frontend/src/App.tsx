@@ -12,6 +12,7 @@ import Admin from './Pages/Admin';
 import AdminComments from './Pages/Admin/Comments';
 import AdminInquiries from './Pages/Admin/Inquiries';
 import AdminLogs from './Pages/Admin/Logs';
+import AdminReports from './Pages/Admin/Reports';
 import AdminTopics from './Pages/Admin/Topics';
 import AdminUsers from './Pages/Admin/Users';
 import Contact from './Pages/Contact';
@@ -237,6 +238,7 @@ const router = createBrowserRouter([
               { path: 'inquiries', element: <AdminInquiries /> },
               { path: 'topics', element: <AdminTopics /> },
               { path: 'comments', element: <AdminComments /> },
+              { path: 'reports', element: <AdminReports /> },
               { path: 'logs', element: <AdminLogs /> },
               { path: 'users', element: <AdminUsers /> },
             ],

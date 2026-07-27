@@ -8,3 +8,4 @@ from .pinned_topic import PinnedTopicCrud
 from .inquiry import InquiryCrud
 from .admin_action_log import AdminActionLogCrud
 from .notification import NotificationCrud
+from .report import ReportCrud
