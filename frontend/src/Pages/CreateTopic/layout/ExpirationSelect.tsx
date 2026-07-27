@@ -1,8 +1,11 @@
+import { formatExpirationDateTime } from '../expiration';
+
 type ExpirationPreset = '1d' | '3d' | '7d' | '14d' | 'custom';
 
 type ExpirationSelectProps = {
   dateValue: string;
   timeValue: string;
+  isInvalid: boolean;
   preset: ExpirationPreset;
   minDate: string;
   onPresetChange: (preset: ExpirationPreset) => void;
@@ -24,6 +27,7 @@ const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, index) => String(index).pa
 const ExpirationSelect = ({
   dateValue,
   timeValue,
+  isInvalid,
   preset,
   minDate,
   onPresetChange,
@@ -33,6 +37,7 @@ const ExpirationSelect = ({
   const [selectedHour = '23', selectedMinute = '59'] = timeValue.split(':');
   const onHourChange = (hour: string) => onTimeChange(`${hour}:${selectedMinute}`);
   const onMinuteChange = (minute: string) => onTimeChange(`${selectedHour}:${minute}`);
+  const formattedExpiration = formatExpirationDateTime(`${dateValue}T${timeValue}`);
 
   return (
     <div>
@@ -106,8 +111,29 @@ const ExpirationSelect = ({
         </div>
       </div>
 
+      {formattedExpiration && (
+        <div
+          aria-live={'polite'}
+          className={`mt-3 rounded-lg border px-3 py-3 sm:px-4 ${
+            isInvalid ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-50'
+          }`}
+        >
+          <p className={`text-xs font-semibold ${isInvalid ? 'text-red-600' : 'text-slate-500'}`}>
+            마감 예정
+          </p>
+          <p className={`mt-1 break-keep text-sm font-semibold leading-6 ${isInvalid ? 'text-red-700' : 'text-slate-900'}`}>
+            {formattedExpiration}
+          </p>
+          {isInvalid && (
+            <p className={'mt-1.5 text-xs font-medium text-red-600'}>
+              현재 시각 이후로 마감 일시를 선택해 주세요.
+            </p>
+          )}
+        </div>
+      )}
+
       <p className="mt-1.5 text-xs text-slate-500">
-        기본값은 7일 뒤 23:59입니다. 마감 시간이 지나면 투표가 자동으로 종료되고 결과만 볼 수 있습니다.
+        마감 후에는 추가로 투표할 수 없으며 결과만 확인할 수 있습니다.
       </p>
     </div>
   );

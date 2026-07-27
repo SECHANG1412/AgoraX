@@ -10,30 +10,11 @@ import ExpirationSelect, { type ExpirationPreset } from './layout/ExpirationSele
 import FormField from './layout/FormField';
 import SubmitButton from './layout/SubmitButton';
 import VoteOptionInputs from './layout/VoteOptionInputs';
+import { combineDateTime, getPresetDate, toDateInputValue } from './expiration';
 
 const TITLE_MAX_LENGTH = 80;
 const OPTION_COUNT = 2;
-const EXPIRATION_PRESET_DAYS: Record<Exclude<ExpirationPreset, 'custom'>, number> = {
-  '1d': 1,
-  '3d': 3,
-  '7d': 7,
-  '14d': 14,
-};
-
 const DEFAULT_EXPIRATION_TIME = '23:59';
-
-const toDateInputValue = (date: Date) => {
-  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
-};
-
-const combineDateTime = (dateValue: string, timeValue: string) => `${dateValue}T${timeValue}`;
-
-const getPresetDate = (preset: Exclude<ExpirationPreset, 'custom'>) => {
-  const date = new Date();
-  date.setDate(date.getDate() + EXPIRATION_PRESET_DAYS[preset]);
-  return toDateInputValue(date);
-};
 
 export type CreateTopicFormData = {
   title: string;
@@ -63,6 +44,8 @@ const CreateTopic = () => {
   }, []);
 
   const minExpirationDate = toDateInputValue(new Date());
+  const expirationDate = new Date(formData.expires_at);
+  const isExpirationInvalid = Number.isNaN(expirationDate.getTime()) || expirationDate <= new Date();
 
   const onExpirationPresetChange = useCallback((preset: ExpirationPreset) => {
     setExpirationPreset(preset);
@@ -163,6 +146,7 @@ const CreateTopic = () => {
           <ExpirationSelect
             dateValue={formData.expires_at.split('T')[0] || ''}
             timeValue={expirationTime}
+            isInvalid={isExpirationInvalid}
             preset={expirationPreset}
             minDate={minExpirationDate}
             onPresetChange={onExpirationPresetChange}
