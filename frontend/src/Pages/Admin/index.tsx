@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
-import type { AdminActionLogRead, CommentAdminRead, InquiryRead, InquiryStatus, TopicAdminRead } from '../../types';
+import type { AdminActionLogRead, CommentAdminRead, InquiryRead, InquiryStatus, ReportAdminRead, TopicAdminRead } from '../../types';
 import { formatKoreanDateTime, parseApiDate } from '../../utils/date';
 
 type KnownAdminAction = 'UPDATE_INQUIRY_STATUS' | 'DELETE_INQUIRY' | 'DELETE_TOPIC' | 'DELETE_COMMENT';
@@ -59,6 +59,7 @@ const Admin = () => {
   const [inquiries, setInquiries] = useState<InquiryRead[]>([]);
   const [topics, setTopics] = useState<TopicAdminRead[]>([]);
   const [comments, setComments] = useState<CommentAdminRead[]>([]);
+  const [reports, setReports] = useState<ReportAdminRead[]>([]);
   const [logs, setLogs] = useState<AdminActionLogRead[]>([]);
   const [message, setMessage] = useState<Message | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,17 +68,19 @@ const Admin = () => {
     setIsLoading(true);
     setMessage(null);
     try {
-      const [inquiriesResponse, topicsResponse, commentsResponse, logsResponse] =
+      const [inquiriesResponse, topicsResponse, commentsResponse, reportsResponse, logsResponse] =
         await Promise.all([
           api.get<InquiryRead[]>('/manage-api/inquiries'),
           api.get<TopicAdminRead[]>('/manage-api/topics'),
           api.get<CommentAdminRead[]>('/manage-api/comments'),
+          api.get<ReportAdminRead[]>('/manage-api/reports', { params: { status: 'pending' } }),
           api.get<AdminActionLogRead[]>('/manage-api/logs', { params: { limit: 5 } }),
         ]);
 
       setInquiries(inquiriesResponse.data);
       setTopics(topicsResponse.data);
       setComments(commentsResponse.data);
+      setReports(reportsResponse.data);
       setLogs(logsResponse.data);
     } catch {
       setMessage({ type: 'error', text: '관리자 대시보드를 불러오지 못했습니다.' });
@@ -96,8 +99,9 @@ const Admin = () => {
       resolvedInquiries: inquiries.filter((inquiry) => inquiry.status === 'resolved').length,
       topics: topics.length,
       comments: comments.length,
+      pendingReports: reports.length,
     };
-  }, [comments, inquiries, topics]);
+  }, [comments, inquiries, reports, topics]);
 
   const recentInquiries = useMemo(() => {
     return [...inquiries]
@@ -131,9 +135,10 @@ const Admin = () => {
 
       {message && <p className="mb-4 text-sm font-semibold text-red-600">{message.text}</p>}
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard label="미처리 문의" value={stats.pendingInquiries} to="/manage/inquiries" />
         <StatCard label="완료 문의" value={stats.resolvedInquiries} to="/manage/inquiries" />
+        <StatCard label="미처리 신고" value={stats.pendingReports} to="/manage/reports" />
         <StatCard label="관리 대상 토픽" value={stats.topics} to="/manage/topics" />
         <StatCard label="관리 대상 댓글" value={stats.comments} to="/manage/comments" />
       </div>
@@ -213,6 +218,7 @@ const Admin = () => {
           <QuickLink to="/manage/users">회원 관리</QuickLink>
           <QuickLink to="/manage/inquiries">문의 관리</QuickLink>
           <QuickLink to="/manage/topics">토픽 관리</QuickLink>
+          <QuickLink to="/manage/reports">신고 관리</QuickLink>
           <QuickLink to="/manage/comments">댓글 관리</QuickLink>
           <QuickLink to="/manage/logs">감사 로그</QuickLink>
         </div>
