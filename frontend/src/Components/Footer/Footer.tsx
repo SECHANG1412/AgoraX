@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Footer = () => {
-  const quickLinks = [
-    { label: 'Home', url: '/' },
-    { label: 'Profile', url: '/profile' },
-    { label: 'Contact', url: '/contact' },
-  ];
+const QUICK_LINKS = [
+  { label: 'Home', url: '/' },
+  { label: 'Profile', url: '/profile' },
+  { label: 'Contact', url: '/contact' },
+];
 
+const Footer = () => {
   return (
     <footer className="border-t border-gray-200 bg-white text-gray-700">
       <div className="mx-auto max-w-3xl px-4 py-7">
@@ -22,7 +22,7 @@ const Footer = () => {
           <nav className="flex flex-col" aria-label="푸터 바로가기">
             <h3 className="mb-3 text-base font-semibold text-gray-900">Quick Links</h3>
             <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm leading-6 text-gray-600">
-              {quickLinks.map(({ label, url }) => (
+              {QUICK_LINKS.map(({ label, url }) => (
                 <li key={label}>
                   <Link to={url} className="hover:text-gray-900">
                     {label}
