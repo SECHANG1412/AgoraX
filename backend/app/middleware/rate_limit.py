@@ -17,6 +17,14 @@ logger = logging.getLogger(__name__)
 
 Scope = Literal["ip", "user", "user_or_ip"]
 
+INCREMENT_WITH_EXPIRY_SCRIPT = """
+local current_count = redis.call("INCR", KEYS[1])
+if current_count == 1 then
+    redis.call("EXPIRE", KEYS[1], ARGV[1])
+end
+return current_count
+"""
+
 
 @dataclass(frozen=True)
 class RateLimitPolicy:
@@ -66,9 +74,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         key = self._build_key(policy, identity)
 
         try:
-            current_count = await redis_client.incr(key)
-            if current_count == 1:
-                await redis_client.expire(key, policy.window_seconds)
+            current_count = await redis_client.eval(
+                INCREMENT_WITH_EXPIRY_SCRIPT,
+                1,
+                key,
+                policy.window_seconds,
+            )
 
             if current_count > policy.limit:
                 retry_after = await self._retry_after(redis_client, key, policy.window_seconds)
