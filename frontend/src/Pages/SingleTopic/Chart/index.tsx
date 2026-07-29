@@ -10,7 +10,7 @@ import type { VoteChartPoint } from '../../../types';
 export type TimeFrame = '1H' | '6H' | '1D' | '1W' | 'ALL';
 type VoteColorKey = keyof typeof voteColors;
 
-const timeFrames: TimeFrame[] = ['1H', '6H', '1D', '1W', 'ALL'];
+const TIME_FRAMES: TimeFrame[] = ['1H', '6H', '1D', '1W', 'ALL'];
 
 type ChartProps = {
   topicId: number | string;
@@ -82,7 +82,7 @@ const Chart = ({ topicId, voteOptions }: ChartProps) => {
         selected={selectedTimeFrame}
         onChange={onTimeFrameChange}
         loading={loading}
-        options={timeFrames}
+        options={TIME_FRAMES}
       />
     </section>
   );
