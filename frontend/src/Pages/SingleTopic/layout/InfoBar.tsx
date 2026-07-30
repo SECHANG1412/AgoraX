@@ -5,24 +5,26 @@ type InfoBarProps = {
   category: string;
 };
 
+const getInfoItems = (totalVotes: number, category: string) => [
+  {
+    icon: <FaChartBar className="h-4 w-4 text-blue-600" />,
+    label: '총 투표수',
+    value: `${totalVotes}표`,
+  },
+  {
+    icon: <FaShieldAlt className="h-4 w-4 text-blue-600" />,
+    label: '투표 규칙',
+    value: '한 번만 투표 가능',
+  },
+  {
+    icon: <FaTag className="h-4 w-4 text-blue-600" />,
+    label: '카테고리',
+    value: category || '카테고리 없음',
+  },
+];
+
 const InfoBar = ({ totalVotes, category }: InfoBarProps) => {
-  const items = [
-    {
-      icon: <FaChartBar className="h-4 w-4 text-blue-600" />,
-      label: '총 투표수',
-      value: `${totalVotes}표`,
-    },
-    {
-      icon: <FaShieldAlt className="h-4 w-4 text-blue-600" />,
-      label: '투표 규칙',
-      value: '한 번만 투표 가능',
-    },
-    {
-      icon: <FaTag className="h-4 w-4 text-blue-600" />,
-      label: '카테고리',
-      value: category || '카테고리 없음',
-    },
-  ];
+  const items = getInfoItems(totalVotes, category);
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
