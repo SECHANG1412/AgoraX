@@ -247,6 +247,12 @@ POST /manage-api/notifications/topic-close/dispatch
 
 ## 실행 방법
 
+### 사전 요구사항
+
+- Docker 및 Docker Compose
+- 개별 개발 서버 실행 시 Python 3.12, Node.js 22
+- 부하 테스트 실행 시 k6
+
 ### 1. 프로젝트 클론
 
 ```bash
@@ -254,14 +260,23 @@ git clone https://github.com/SECHANG1412/Waggle-Service.git
 cd Waggle-Service
 ```
 
-### 2. 환경 변수 설정
+### 2. Docker Compose 환경 변수 설정
 
 ```bash
-cp backend/.env.example backend/.env.local
-cp frontend/.env.example frontend/.env.local
+cp backend/.env.example backend/.env.prod
+cp frontend/.env.example frontend/.env.prod
 ```
 
-필요한 값을 로컬 환경에 맞게 수정합니다.
+`docker-compose.yml`은 위의 `.env.prod` 파일을 읽습니다. 백엔드 환경 변수는 Compose 네트워크와 기본 MySQL 설정에 맞게 다음 값을 확인합니다.
+
+```dotenv
+DB_HOST=db
+DB_PORT=3306
+DB_PASSWORD=password
+REDIS_URL=redis://redis:6379/0
+```
+
+`SECRET_KEY`와 관리자 비밀번호는 예시 값을 그대로 사용하지 말고 로컬 전용 값으로 변경합니다. 소셜 로그인을 확인하려면 각 OAuth 제공자의 client ID·secret과 callback URL도 설정합니다.
 
 ### 3. Docker Compose 실행
 
@@ -282,16 +297,18 @@ docker compose up -d --build
 
 ```bash
 docker compose exec backend alembic upgrade head
-docker compose restart backend
 ```
 
 ### 5. 로컬 개발 서버 실행
+
+Docker Compose 대신 백엔드와 프론트엔드를 개별 실행할 때 사용합니다. MySQL과 Redis는 먼저 실행되어 있어야 합니다.
 
 Frontend:
 
 ```bash
 cd frontend
-npm install
+cp .env.example .env.local
+npm ci
 npm run dev
 ```
 
@@ -299,13 +316,18 @@ Backend:
 
 ```bash
 cd backend
+cp .env.example .env
 pip install -r requirements-dev.txt
 uvicorn main:app --reload
 ```
 
-## 테스트
+백엔드에서 호스트의 Compose MySQL을 사용한다면 `.env`의 `DB_HOST=localhost`, `DB_PORT=3307`을 사용합니다. Redis 기본 주소는 `redis://localhost:6379/0`입니다.
 
-### Backend
+## 테스트 및 성능 검증
+
+### Backend 통합 테스트 및 lint
+
+인증·CSRF·OAuth, 토픽·투표·댓글·답글·좋아요, 신고·문의·알림, 관리자 권한, 감사 로그, Redis Rate Limiting을 통합 테스트로 검증합니다.
 
 ```bash
 cd backend
@@ -313,10 +335,11 @@ pytest -q tests/integration
 ruff check app main.py tests
 ```
 
-### Frontend
+### Frontend 정적 검증 및 build
 
 ```bash
 cd frontend
+npm ci
 npm run lint
 npm run typecheck
 npm run build
@@ -324,14 +347,21 @@ npm run build
 
 ### k6 부하 테스트
 
+토픽 목록·상세, 댓글 목록, 투표 통계 API에 smoke·low·mid·upper 단계의 스크립트를 사용합니다. Rate Limit 스크립트는 연속 로그인 요청에 대한 `429`와 `Retry-After` 응답을 확인합니다.
+
 ```bash
 k6 run k6/topics-list-smoke.js
 k6 run k6/topics-list-upper-load.js
+k6 run k6/rate-limit.js
 ```
+
+대부분의 스크립트는 `http://host.docker.internal:8000`을 기본 대상으로 사용합니다. 개선 전후를 비교할 때는 같은 스크립트·실행 환경·seed data를 유지하고, k6 결과를 Prometheus/Grafana·CloudWatch 지표와 함께 확인합니다.
 
 ## 향후 개선 계획
 
-- 운영 환경 기준의 성능 테스트 시나리오와 결과 기록 체계 보강
-- Prometheus/Grafana 기반 알림 규칙 추가
-- GitHub Actions 배포 실패 원인 분류와 알림 흐름 개선
-- 관리자 운영 기능의 검색/필터링 사용성 개선
+- 운영 환경의 성능 측정 결과를 버전별로 보존하고 회귀 기준 구체화
+- Prometheus/Grafana Alert Rule과 외부 알림 채널 연결
+- GitHub Actions 배포 실패 단계별 원인 분류와 알림 자동화
+- 실제 운영 트래픽을 바탕으로 엔드포인트별 Rate Limit 정책 조정
+- 관리자 검색·필터 및 대량 처리 사용성 개선
+- 롤백 또는 무중단 배포가 가능한 운영 구조 검토
