@@ -33,36 +33,26 @@ Waggle은 사용자가 다양한 주제의 2지선다 토픽을 만들고, 투�
 
 ## 핵심 성과
 
-- **AWS EC2, Docker Compose, Nginx 기반 운영 환경 구성**
-- **관측 지표 기반 `/topics` API 성능 개선**
-- **GitHub Actions 기반 CI/CD 및 운영 검증 자동화**
-- **HttpOnly 쿠키 기반 인증 구조와 CSRF 방어 적용**
+| 영역 | 성과 |
+| --- | --- |
+| API 성능 | AWS EC2 300 VU·5분 조건에서 `/topics` 처리량을 **37.02 → 평균 94.75 req/s**로 약 2.6배 개선 |
+| 재현성 | 개선 후 동일 조건으로 3회 반복 측정해 **93.34~95.85 req/s** 범위 확인 |
+| 응답 시간 | 300 VU에서 평균 응답 시간을 **7.00초 → 2.14초**로 단축 |
+| CI/CD | lint·통합 테스트·typecheck·build와 배포·migration·Nginx 검증·3단계 smoke test 자동화 |
+| 보안 | HttpOnly JWT, Double Submit CSRF 검증, Redis 고정 윈도우 Rate Limiting 적용 |
+| 트래픽 검증 | Rate Limit의 `429 Too Many Requests`와 `Retry-After` 반환을 통합 테스트와 k6로 검증 |
 
 ## 기술 스택
 
-### Frontend
-
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge)
-
-### Backend
-
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge)
-![Alembic](https://img.shields.io/badge/Alembic-333333?style=for-the-badge)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-
-### Infra / DevOps / Monitoring
-
-![AWS EC2](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
-![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
-![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
-![k6](https://img.shields.io/badge/k6-7D64FF?style=for-the-badge&logo=k6&logoColor=white)
+| 영역 | 기술 |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, Axios, Recharts |
+| Backend | Python, FastAPI, SQLAlchemy, Alembic |
+| Data | MySQL, Redis |
+| Infra | AWS EC2, Nginx, Docker Compose |
+| CI/CD | GitHub Actions |
+| Observability | Prometheus, Grafana, CloudWatch |
+| Test | Pytest, Ruff, ESLint, k6 |
 
 ## 시스템 아키텍처
 
