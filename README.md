@@ -113,13 +113,32 @@ GROUP BY topic_id;
 
 ### 3. GitHub Actions 기반 CI/CD 및 운영 검증 자동화
 
-GitHub Actions를 통해 PR 검증과 main 브랜치 배포 흐름을 자동화했습니다.
+수동 배포 과정에서 migration 누락이나 프론트엔드 빌드 실패가 운영 환경에서 처음 발견되는 문제를 줄이기 위해 검증과 배포 흐름을 분리해 자동화했습니다.
 
-- PR 단계에서 backend lint, backend integration test, frontend lint, typecheck, build 실행
-- main 브랜치 배포 시 EC2에 SSH 접속 후 최신 코드 반영
-- 백엔드 컨테이너 재빌드, Alembic migration, 프론트엔드 빌드, Nginx reload 순서 구성
-- `/health`, `/health/db`, `/topics` smoke test로 배포 후 상태 확인
-- Markdown 문서 수정은 배포 workflow가 실행되지 않도록 `paths-ignore` 적용
+#### PR 검증
+
+- Backend: Ruff lint, Pytest 통합 테스트
+- Frontend: ESLint, TypeScript typecheck, production build
+- 같은 브랜치에 새 커밋이 추가되면 이전 CI 실행을 취소해 최신 변경만 검증
+
+#### main 브랜치 배포
+
+1. GitHub Actions에서 EC2에 SSH로 접속해 최신 코드 반영
+2. FastAPI 컨테이너 재빌드
+3. Alembic migration 실행
+4. React production build 생성
+5. `nginx -t` 성공 여부를 확인한 뒤 Nginx reload
+6. 실행 중인 컨테이너 상태 확인
+
+#### 배포 후 3단계 smoke test
+
+| 단계 | 대상 | 확인 내용 |
+| --- | --- | --- |
+| 1 | `/health` | FastAPI 애플리케이션 응답 |
+| 2 | `/health/db` | 애플리케이션과 MySQL 연결 |
+| 3 | `/topics?limit=10&offset=0` | 주요 읽기 API의 실제 응답 |
+
+배포 작업은 동시에 실행하지 않도록 제어하고, Markdown 문서만 변경된 경우에는 `paths-ignore`를 적용해 불필요한 운영 배포가 실행되지 않도록 구성했습니다.
 
 ### 4. HttpOnly 쿠키 기반 인증 구조와 CSRF 방어 적용
 
