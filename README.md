@@ -1,9 +1,17 @@
 # Waggle
 
-> 2지선다 투표를 생성하고, 투표 결과와 댓글 의견을 공유하는 투표 기반 커뮤니티 서비스
+> 2지선다 토픽을 만들고 투표 결과와 댓글 의견을 공유하는 투표 기반 커뮤니티 서비스
 
-- Service: [https://www.waggle.kr](https://www.waggle.kr)
-- Repository: [https://github.com/SECHANG1412/Waggle-Service](https://github.com/SECHANG1412/Waggle-Service)
+[서비스 바로가기](https://www.waggle.kr) · [GitHub 저장소](https://github.com/SECHANG1412/Waggle-Service)
+
+> 현재 AWS EC2 운영을 일시 중단하여 서비스 접속이 제한될 수 있습니다.
+
+| 구분 | 내용 |
+| --- | --- |
+| 진행 기간 | 2025.11 ~ 진행 중 |
+| 프로젝트 형태 | 개인 프로젝트 |
+| 담당 범위 | 백엔드 API 설계·구현, 프론트엔드 구현, 배포·운영 환경 구성 |
+| 핵심 기능 | 토픽 생성, 투표, 결과 시각화, 댓글·답글, 좋아요, 신고·문의, 알림, 관리자 운영 |
 
 ## 목차
 
@@ -11,61 +19,46 @@
 2. [핵심 성과](#핵심-성과)
 3. [기술 스택](#기술-스택)
 4. [시스템 아키텍처](#시스템-아키텍처)
-5. [주요 구현 및 개선 내용](#주요-구현-및-개선-내용)
-6. [핵심 기능](#핵심-기능)
+5. [핵심 문제 해결](#핵심-문제-해결)
+6. [주요 기능](#주요-기능)
 7. [실행 방법](#실행-방법)
-8. [테스트](#테스트)
+8. [테스트 및 성능 검증](#테스트-및-성능-검증)
 9. [향후 개선 계획](#향후-개선-계획)
 
 ## 프로젝트 개요
 
-Waggle은 사용자가 다양한 주제의 토픽을 만들고, 두 가지 선택지 중 하나에 투표하며, 댓글과 답글로 의견을 나눌 수 있는 커뮤니티 서비스입니다.
+Waggle은 사용자가 다양한 주제의 2지선다 토픽을 만들고, 투표 결과를 확인하며, 댓글과 답글로 의견을 나눌 수 있는 커뮤니티 서비스입니다. 토픽 생성과 투표뿐 아니라 소셜 로그인, 좋아요, 신고·문의, 마감 알림, 관리자 콘텐츠 운영 기능까지 구현했습니다.
 
-단순 기능 구현을 넘어 실제 도메인에서 접근 가능한 운영 환경을 구성하고, 부하 테스트와 관측 지표를 기반으로 주요 API 병목을 개선했습니다. 또한 GitHub Actions 기반 CI/CD, HttpOnly 쿠키 기반 인증 구조, CSRF 방어 흐름을 적용해 운영과 보안 관점의 완성도를 높였습니다.
-
-- **진행 기간**: 2025.11 ~ 진행 중
-- **프로젝트 형태**: 개인 프로젝트
-- **주요 기능**: 토픽 생성, 2지선다 투표, 투표 결과 시각화, 댓글/답글, 좋아요, 문의, 관리자 운영 기능
-- **운영 환경**: AWS EC2, Nginx, Docker Compose, MySQL, GitHub Actions
+기능 구현에 그치지 않고 AWS EC2, Nginx, Docker Compose 기반의 운영 환경을 구성했습니다. 또한 k6 부하 테스트와 Prometheus/Grafana·CloudWatch 관측 지표를 함께 사용해 API 병목을 진단하고, GitHub Actions로 검증과 배포 과정을 자동화했습니다.
 
 ## 핵심 성과
 
-- **AWS EC2, Docker Compose, Nginx 기반 운영 환경 구성**
-- **관측 지표 기반 `/topics` API 성능 개선**
-- **GitHub Actions 기반 CI/CD 및 운영 검증 자동화**
-- **HttpOnly 쿠키 기반 인증 구조와 CSRF 방어 적용**
+| 영역 | 성과 |
+| --- | --- |
+| API 성능 | AWS EC2 300 VU·5분 조건에서 `/topics` 처리량을 **37.02 → 평균 94.75 req/s**로 약 2.6배 개선 |
+| 재현성 | 개선 후 동일 조건으로 3회 반복 측정해 **93.34~95.85 req/s** 범위 확인 |
+| 응답 시간 | 300 VU에서 평균 응답 시간을 **7.00초 → 2.14초**로 단축 |
+| CI/CD | lint·통합 테스트·typecheck·build와 배포·migration·Nginx 검증·3단계 smoke test 자동화 |
+| 보안 | HttpOnly JWT, Double Submit CSRF 검증, Redis 고정 윈도우 Rate Limiting 적용 |
+| 트래픽 검증 | Rate Limit의 `429 Too Many Requests`와 `Retry-After` 반환을 통합 테스트와 k6로 검증 |
 
 ## 기술 스택
 
-### Frontend
-
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge)
-
-### Backend
-
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge)
-![Alembic](https://img.shields.io/badge/Alembic-333333?style=for-the-badge)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-
-### Infra / DevOps / Monitoring
-
-![AWS EC2](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
-![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
-![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
-![k6](https://img.shields.io/badge/k6-7D64FF?style=for-the-badge&logo=k6&logoColor=white)
+| 영역 | 기술 |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, Axios, Recharts |
+| Backend | Python, FastAPI, SQLAlchemy, Alembic |
+| Data | MySQL, Redis |
+| Infra | AWS EC2, Nginx, Docker Compose |
+| CI/CD | GitHub Actions |
+| Observability | Prometheus, Grafana, CloudWatch |
+| Test | Pytest, Ruff, ESLint, k6 |
 
 ## 시스템 아키텍처
 
 <img src="assets/readme/architecture.png" width="850" alt="Waggle 시스템 아키텍처" />
 
-## 주요 구현 및 개선 내용
+## 핵심 문제 해결
 
 ### 1. AWS EC2, Docker Compose, Nginx 기반 운영 환경 구성
 
@@ -80,42 +73,109 @@ Waggle은 사용자가 다양한 주제의 토픽을 만들고, 두 가지 선�
 
 ### 2. 관측 지표 기반 `/topics` API 성능 개선
 
-`/topics` 목록 조회에서 댓글 수, 좋아요 수, 투표 결과, pinned 여부를 topic별로 반복 조회하거나 계산하던 흐름을 개선했습니다.
+#### 문제와 진단
 
-- 댓글 수, 좋아요 수, pinned 여부를 `topic_id` 기준으로 일괄 집계
-- 투표 결과와 대댓글 수를 여러 topic 기준으로 한 번에 조회하도록 개선
-- `votes(topic_id, vote_index)`, `comments(topic_id, is_deleted)`, `replies(comment_id)` 인덱스 보강
-- MySQL Workbench `EXPLAIN`으로 주요 집계 쿼리의 인덱스 사용 여부 확인
-- k6 기준 300 VU / 5분 조건에서 처리량을 **37 req/s -> 95 req/s 수준으로 개선**
+운영 환경의 `/topics?limit=10&offset=0`을 대상으로 별도 EC2에서 k6 부하 테스트를 진행했습니다. VU를 100에서 300으로 높여도 처리량은 약 37 req/s에 머무는 반면 평균 응답 시간과 p95가 계속 증가해, 현재 구성의 요청 처리 능력이 포화된 것으로 판단했습니다.
+
+| 조건 | 평균 응답 시간 | p95 | 실패율 | 처리량 |
+| --- | ---: | ---: | ---: | ---: |
+| 100 VU / 5분 | 1.70초 | 3.26초 | 0% | 36.81 req/s |
+| 200 VU / 5분 | 4.33초 | 8.63초 | 0% | 37.18 req/s |
+| 300 VU / 5분 | 7.00초 | 13.96초 | 0.22% | 37.02 req/s |
+
+Uvicorn worker 수와 access log 설정을 조정했지만 처리량 증가와 p95 감소는 제한적이었습니다. 이후 API 흐름을 다시 점검해 댓글·좋아요·투표 결과·대댓글 수·고정 여부를 토픽 단위로 반복 조회하거나 계산하는 구조를 주요 개선 대상으로 선정했습니다.
+
+#### 개선
+
+- 댓글·좋아요 수를 `topic_id IN (...)`과 `GROUP BY`를 사용해 일괄 집계
+- 사용자의 고정 토픽 목록을 한 번만 조회하고 응답 생성 과정에서 재사용
+- 선택지별 투표 수를 `topic_id`, `vote_index` 기준으로 한 번에 집계
+- 대댓글 수를 여러 토픽 기준으로 조회하는 `count_by_topic_ids()` 추가
+- 조회·집계 조건에 맞춰 다음 인덱스 보강
+  - `votes(topic_id, vote_index)`
+  - `comments(topic_id, is_deleted)`
+  - `replies(comment_id)`
+- MySQL `EXPLAIN`에서 `ix_votes_topic_vote_index` 사용과 `Using where; Using index` 확인
+
+```sql
+SELECT topic_id, COUNT(*) AS comment_count
+FROM comments
+WHERE topic_id IN (...)
+  AND is_deleted = FALSE
+GROUP BY topic_id;
+```
+
+#### 검증 결과
+
+로컬 Docker 20 VU 테스트에서 평균 응답 시간은 **239.15ms → 140.4ms로 41.3%**, p95는 **437.21ms → 297.05ms로 32.1% 감소**했습니다.
+
+개선 사항을 운영 환경에 배포한 뒤 동일한 AWS EC2 300 VU·5분 조건으로 3회 반복 측정했습니다. 처리량은 **37.02 → 평균 94.75 req/s로 약 2.6배 증가**했고, 세 번의 결과도 **93.34~95.85 req/s** 범위로 유지됐습니다. 평균 응답 시간은 **7.00초 → 2.14초**로 감소했습니다.
 
 ### 3. GitHub Actions 기반 CI/CD 및 운영 검증 자동화
 
-GitHub Actions를 통해 PR 검증과 main 브랜치 배포 흐름을 자동화했습니다.
+수동 배포 과정에서 migration 누락이나 프론트엔드 빌드 실패가 운영 환경에서 처음 발견되는 문제를 줄이기 위해 검증과 배포 흐름을 분리해 자동화했습니다.
 
-- PR 단계에서 backend lint, backend integration test, frontend lint, typecheck, build 실행
-- main 브랜치 배포 시 EC2에 SSH 접속 후 최신 코드 반영
-- 백엔드 컨테이너 재빌드, Alembic migration, 프론트엔드 빌드, Nginx reload 순서 구성
-- `/health`, `/health/db`, `/topics` smoke test로 배포 후 상태 확인
-- Markdown 문서 수정은 배포 workflow가 실행되지 않도록 `paths-ignore` 적용
+#### PR 검증
+
+- Backend: Ruff lint, Pytest 통합 테스트
+- Frontend: ESLint, TypeScript typecheck, production build
+- 같은 브랜치에 새 커밋이 추가되면 이전 CI 실행을 취소해 최신 변경만 검증
+
+#### main 브랜치 배포
+
+1. GitHub Actions에서 EC2에 SSH로 접속해 최신 코드 반영
+2. FastAPI 컨테이너 재빌드
+3. Alembic migration 실행
+4. React production build 생성
+5. `nginx -t` 성공 여부를 확인한 뒤 Nginx reload
+6. 실행 중인 컨테이너 상태 확인
+
+#### 배포 후 3단계 smoke test
+
+| 단계 | 대상 | 확인 내용 |
+| --- | --- | --- |
+| 1 | `/health` | FastAPI 애플리케이션 응답 |
+| 2 | `/health/db` | 애플리케이션과 MySQL 연결 |
+| 3 | `/topics?limit=10&offset=0` | 주요 읽기 API의 실제 응답 |
+
+배포 작업은 동시에 실행하지 않도록 제어하고, Markdown 문서만 변경된 경우에는 `paths-ignore`를 적용해 불필요한 운영 배포가 실행되지 않도록 구성했습니다.
 
 ### 4. HttpOnly 쿠키 기반 인증 구조와 CSRF 방어 적용
 
-JWT 인증 정보를 브라우저에 저장할 때 토큰 노출 위험과 쿠키 자동 전송으로 인한 CSRF 위험을 함께 고려했습니다.
+JWT를 브라우저 저장소에 보관할 때 발생할 수 있는 토큰 노출 위험과 쿠키 자동 전송에 따른 CSRF 위험을 함께 고려했습니다.
 
-- `access_token`, `refresh_token`은 HttpOnly 쿠키에 저장
-- 로그인 또는 토큰 갱신 시 `csrf_token` 쿠키 발급
-- POST, PUT, PATCH, DELETE 요청마다 `X-CSRF-Token` 헤더 포함
-- 서버에서 쿠키의 `csrf_token`과 헤더의 `X-CSRF-Token` 비교
-- 누락 또는 불일치 시 `403 CSRF validation failed`로 차단
-- CSRF 토큰 누락, 불일치, 정상 요청 흐름을 통합 테스트로 검증
+#### 적용 방식
 
-## 핵심 기능
+- `access_token`, `refresh_token`을 JavaScript로 읽을 수 없는 HttpOnly 쿠키에 저장
+- 로그인 또는 access token 갱신 시 `csrf_token` 쿠키 발급
+- POST, PUT, PATCH, DELETE 요청에 `X-CSRF-Token` 헤더 첨부
+- 서버에서 쿠키의 `csrf_token`과 헤더 값을 비교하는 Double Submit 방식 적용
+- 토큰이 누락되거나 일치하지 않으면 `403 CSRF validation failed`로 차단
+
+CSRF 토큰 누락·불일치·정상 요청과 access token 갱신 흐름을 통합 테스트로 검증했습니다. Google·Naver·Kakao OAuth 로그인에도 state 쿠키 검증을 적용해 위조된 callback 요청을 차단했습니다.
+
+### 5. Redis 고정 윈도우 Rate Limiting
+
+로그인·회원가입과 콘텐츠 작성 API에 과도한 요청이 집중되는 상황을 제어하기 위해 엔드포인트별 Rate Limit 정책을 구현했습니다.
+
+- 로그인·회원가입·토큰 갱신은 IP 기준으로 제한
+- 토픽·댓글·답글·투표·좋아요 작성은 인증 사용자 기준으로 제한
+- 문의 작성은 로그인 여부에 따라 사용자 또는 IP 기준으로 제한
+- Redis에서 고정 윈도우의 요청 횟수와 만료 시간을 관리
+- 제한 초과 시 `429 Too Many Requests`와 `Retry-After` 헤더 반환
+- Redis 장애 시 요청을 허용하는 fail-open 정책으로 애플리케이션 가용성 유지
+- 차단 횟수를 `waggle_rate_limit_blocked_total` Prometheus 지표로 수집
+
+정책별 허용·차단 동작은 통합 테스트로 확인하고, k6 연속 요청으로 실제 `429` 응답과 `Retry-After` 반환을 검증했습니다. Redis 카운터 초기화는 원자적으로 처리해 동시에 들어온 첫 요청들이 제한을 우회하지 않도록 보완했습니다.
+
+## 주요 기능
 
 ### 1. 토픽 목록 및 투표 카드
 
 - 카테고리별 토픽 목록 조회
 - 검색어 기반 토픽 탐색
 - 토픽 카드에서 투표 선택지와 현재 투표 비율 확인
+- 로그인 사용자의 관심 토픽 고정
 - PC/모바일 화면에 맞춘 반응형 카드 구성
 
 <p>
@@ -132,6 +192,7 @@ JWT 인증 정보를 브라우저에 저장할 때 토큰 노출 위험과 쿠�
 - 찬성/반대 투표
 - 시간대별 투표 비율 차트 제공
 - 댓글과 답글을 통한 의견 교환
+- 토픽·댓글·답글 좋아요 및 부적절한 콘텐츠 신고
 
 <p>
   <img src="assets/readme/topic-detail.png" width="620" alt="Waggle 토픽 상세 페이지" />
@@ -145,25 +206,34 @@ JWT 인증 정보를 브라우저에 저장할 때 토큰 노출 위험과 쿠�
 
 - 제목, 설명, 카테고리 입력
 - 서비스 정책에 맞춘 2개 투표 선택지 구성
-- 사용자가 쉽게 토픽을 작성할 수 있는 입력 흐름 제공
+- 마감 일시 설정과 마감 예정 요약 제공
+- 유효하지 않은 마감 일시와 필수 입력값 검증
 
 <img src="assets/readme/create-topic.png" width="800" alt="Waggle 토픽 생성 페이지" />
 
-### 4. 프로필 및 사용자 활동
+### 4. 인증, 프로필 및 사용자 활동
 
+- 이메일 기반 회원가입·로그인
+- Google·Naver·Kakao OAuth 로그인
 - 계정 정보 확인
 - 사용자가 작성한 토픽과 댓글 확인
 - 문의 처리 결과 확인
 
 <img src="assets/readme/profile-page.png" width="800" alt="Waggle 프로필 페이지" />
 
-### 5. 관리자 운영 기능
+### 5. 알림 및 문의
+
+- 마감된 토픽의 작성자·투표 참여자·고정 사용자에게 결과 확인 알림 발송
+- 알림 목록 조회와 읽음 처리
+- 사용자가 문의를 등록하고 프로필에서 처리 상태와 답변 확인
+
+### 6. 관리자 운영 기능
 
 - 문의 처리 상태 관리
-- 토픽/댓글 관리
+- 토픽·댓글 및 신고 콘텐츠 관리
 - 관리자 조치 이력과 감사 로그 확인
 - 삭제 전 주요 정보와 조치 사유 추적
-- 마감된 토픽의 작성자, 투표 참여자, 북마크 사용자에게 결과 확인 알림 발송
+- 사용자 계정 상태와 관리자 권한 관리
 
 마감 토픽 알림은 관리자 API로 실행합니다. 운영 환경에서는 이 엔드포인트를 cron 또는 배치 작업에 연결해 주기적으로 호출합니다.
 
@@ -177,6 +247,12 @@ POST /manage-api/notifications/topic-close/dispatch
 
 ## 실행 방법
 
+### 사전 요구사항
+
+- Docker 및 Docker Compose
+- 개별 개발 서버 실행 시 Python 3.12, Node.js 22
+- 부하 테스트 실행 시 k6
+
 ### 1. 프로젝트 클론
 
 ```bash
@@ -184,14 +260,23 @@ git clone https://github.com/SECHANG1412/Waggle-Service.git
 cd Waggle-Service
 ```
 
-### 2. 환경 변수 설정
+### 2. Docker Compose 환경 변수 설정
 
 ```bash
-cp backend/.env.example backend/.env.local
-cp frontend/.env.example frontend/.env.local
+cp backend/.env.example backend/.env.prod
+cp frontend/.env.example frontend/.env.prod
 ```
 
-필요한 값을 로컬 환경에 맞게 수정합니다.
+`docker-compose.yml`은 위의 `.env.prod` 파일을 읽습니다. 백엔드 환경 변수는 Compose 네트워크와 기본 MySQL 설정에 맞게 다음 값을 확인합니다.
+
+```dotenv
+DB_HOST=db
+DB_PORT=3306
+DB_PASSWORD=password
+REDIS_URL=redis://redis:6379/0
+```
+
+`SECRET_KEY`와 관리자 비밀번호는 예시 값을 그대로 사용하지 말고 로컬 전용 값으로 변경합니다. 소셜 로그인을 확인하려면 각 OAuth 제공자의 client ID·secret과 callback URL도 설정합니다.
 
 ### 3. Docker Compose 실행
 
@@ -212,16 +297,18 @@ docker compose up -d --build
 
 ```bash
 docker compose exec backend alembic upgrade head
-docker compose restart backend
 ```
 
 ### 5. 로컬 개발 서버 실행
+
+Docker Compose 대신 백엔드와 프론트엔드를 개별 실행할 때 사용합니다. MySQL과 Redis는 먼저 실행되어 있어야 합니다.
 
 Frontend:
 
 ```bash
 cd frontend
-npm install
+cp .env.example .env.local
+npm ci
 npm run dev
 ```
 
@@ -229,13 +316,18 @@ Backend:
 
 ```bash
 cd backend
+cp .env.example .env
 pip install -r requirements-dev.txt
 uvicorn main:app --reload
 ```
 
-## 테스트
+백엔드에서 호스트의 Compose MySQL을 사용한다면 `.env`의 `DB_HOST=localhost`, `DB_PORT=3307`을 사용합니다. Redis 기본 주소는 `redis://localhost:6379/0`입니다.
 
-### Backend
+## 테스트 및 성능 검증
+
+### Backend 통합 테스트 및 lint
+
+인증·CSRF·OAuth, 토픽·투표·댓글·답글·좋아요, 신고·문의·알림, 관리자 권한, 감사 로그, Redis Rate Limiting을 통합 테스트로 검증합니다.
 
 ```bash
 cd backend
@@ -243,10 +335,11 @@ pytest -q tests/integration
 ruff check app main.py tests
 ```
 
-### Frontend
+### Frontend 정적 검증 및 build
 
 ```bash
 cd frontend
+npm ci
 npm run lint
 npm run typecheck
 npm run build
@@ -254,14 +347,21 @@ npm run build
 
 ### k6 부하 테스트
 
+토픽 목록·상세, 댓글 목록, 투표 통계 API에 smoke·low·mid·upper 단계의 스크립트를 사용합니다. Rate Limit 스크립트는 연속 로그인 요청에 대한 `429`와 `Retry-After` 응답을 확인합니다.
+
 ```bash
 k6 run k6/topics-list-smoke.js
 k6 run k6/topics-list-upper-load.js
+k6 run k6/rate-limit.js
 ```
+
+대부분의 스크립트는 `http://host.docker.internal:8000`을 기본 대상으로 사용합니다. 개선 전후를 비교할 때는 같은 스크립트·실행 환경·seed data를 유지하고, k6 결과를 Prometheus/Grafana·CloudWatch 지표와 함께 확인합니다.
 
 ## 향후 개선 계획
 
-- 운영 환경 기준의 성능 테스트 시나리오와 결과 기록 체계 보강
-- Prometheus/Grafana 기반 알림 규칙 추가
-- GitHub Actions 배포 실패 원인 분류와 알림 흐름 개선
-- 관리자 운영 기능의 검색/필터링 사용성 개선
+- 운영 환경의 성능 측정 결과를 버전별로 보존하고 회귀 기준 구체화
+- Prometheus/Grafana Alert Rule과 외부 알림 채널 연결
+- GitHub Actions 배포 실패 단계별 원인 분류와 알림 자동화
+- 실제 운영 트래픽을 바탕으로 엔드포인트별 Rate Limit 정책 조정
+- 관리자 검색·필터 및 대량 처리 사용성 개선
+- 롤백 또는 무중단 배포가 가능한 운영 구조 검토
