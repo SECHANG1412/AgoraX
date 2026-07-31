@@ -142,14 +142,31 @@ GROUP BY topic_id;
 
 ### 4. HttpOnly 쿠키 기반 인증 구조와 CSRF 방어 적용
 
-JWT 인증 정보를 브라우저에 저장할 때 토큰 노출 위험과 쿠키 자동 전송으로 인한 CSRF 위험을 함께 고려했습니다.
+JWT를 브라우저 저장소에 보관할 때 발생할 수 있는 토큰 노출 위험과 쿠키 자동 전송에 따른 CSRF 위험을 함께 고려했습니다.
 
-- `access_token`, `refresh_token`은 HttpOnly 쿠키에 저장
-- 로그인 또는 토큰 갱신 시 `csrf_token` 쿠키 발급
-- POST, PUT, PATCH, DELETE 요청마다 `X-CSRF-Token` 헤더 포함
-- 서버에서 쿠키의 `csrf_token`과 헤더의 `X-CSRF-Token` 비교
-- 누락 또는 불일치 시 `403 CSRF validation failed`로 차단
-- CSRF 토큰 누락, 불일치, 정상 요청 흐름을 통합 테스트로 검증
+#### 적용 방식
+
+- `access_token`, `refresh_token`을 JavaScript로 읽을 수 없는 HttpOnly 쿠키에 저장
+- 로그인 또는 access token 갱신 시 `csrf_token` 쿠키 발급
+- POST, PUT, PATCH, DELETE 요청에 `X-CSRF-Token` 헤더 첨부
+- 서버에서 쿠키의 `csrf_token`과 헤더 값을 비교하는 Double Submit 방식 적용
+- 토큰이 누락되거나 일치하지 않으면 `403 CSRF validation failed`로 차단
+
+CSRF 토큰 누락·불일치·정상 요청과 access token 갱신 흐름을 통합 테스트로 검증했습니다. Google·Naver·Kakao OAuth 로그인에도 state 쿠키 검증을 적용해 위조된 callback 요청을 차단했습니다.
+
+### 5. Redis 고정 윈도우 Rate Limiting
+
+로그인·회원가입과 콘텐츠 작성 API에 과도한 요청이 집중되는 상황을 제어하기 위해 엔드포인트별 Rate Limit 정책을 구현했습니다.
+
+- 로그인·회원가입·토큰 갱신은 IP 기준으로 제한
+- 토픽·댓글·답글·투표·좋아요 작성은 인증 사용자 기준으로 제한
+- 문의 작성은 로그인 여부에 따라 사용자 또는 IP 기준으로 제한
+- Redis에서 고정 윈도우의 요청 횟수와 만료 시간을 관리
+- 제한 초과 시 `429 Too Many Requests`와 `Retry-After` 헤더 반환
+- Redis 장애 시 요청을 허용하는 fail-open 정책으로 애플리케이션 가용성 유지
+- 차단 횟수를 `waggle_rate_limit_blocked_total` Prometheus 지표로 수집
+
+정책별 허용·차단 동작은 통합 테스트로 확인하고, k6 연속 요청으로 실제 `429` 응답과 `Retry-After` 반환을 검증했습니다. Redis 카운터 초기화는 원자적으로 처리해 동시에 들어온 첫 요청들이 제한을 우회하지 않도록 보완했습니다.
 
 ## 핵심 기능
 
