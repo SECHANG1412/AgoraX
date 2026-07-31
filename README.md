@@ -58,7 +58,7 @@ Waggle은 사용자가 다양한 주제의 2지선다 토픽을 만들고, 투�
 
 <img src="assets/readme/architecture.png" width="850" alt="Waggle 시스템 아키텍처" />
 
-## 주요 구현 및 개선 내용
+## 핵심 문제 해결
 
 ### 1. AWS EC2, Docker Compose, Nginx 기반 운영 환경 구성
 
@@ -73,13 +73,43 @@ Waggle은 사용자가 다양한 주제의 2지선다 토픽을 만들고, 투�
 
 ### 2. 관측 지표 기반 `/topics` API 성능 개선
 
-`/topics` 목록 조회에서 댓글 수, 좋아요 수, 투표 결과, pinned 여부를 topic별로 반복 조회하거나 계산하던 흐름을 개선했습니다.
+#### 문제와 진단
 
-- 댓글 수, 좋아요 수, pinned 여부를 `topic_id` 기준으로 일괄 집계
-- 투표 결과와 대댓글 수를 여러 topic 기준으로 한 번에 조회하도록 개선
-- `votes(topic_id, vote_index)`, `comments(topic_id, is_deleted)`, `replies(comment_id)` 인덱스 보강
-- MySQL Workbench `EXPLAIN`으로 주요 집계 쿼리의 인덱스 사용 여부 확인
-- k6 기준 300 VU / 5분 조건에서 처리량을 **37 req/s -> 95 req/s 수준으로 개선**
+운영 환경의 `/topics?limit=10&offset=0`을 대상으로 별도 EC2에서 k6 부하 테스트를 진행했습니다. VU를 100에서 300으로 높여도 처리량은 약 37 req/s에 머무는 반면 평균 응답 시간과 p95가 계속 증가해, 현재 구성의 요청 처리 능력이 포화된 것으로 판단했습니다.
+
+| 조건 | 평균 응답 시간 | p95 | 실패율 | 처리량 |
+| --- | ---: | ---: | ---: | ---: |
+| 100 VU / 5분 | 1.70초 | 3.26초 | 0% | 36.81 req/s |
+| 200 VU / 5분 | 4.33초 | 8.63초 | 0% | 37.18 req/s |
+| 300 VU / 5분 | 7.00초 | 13.96초 | 0.22% | 37.02 req/s |
+
+Uvicorn worker 수와 access log 설정을 조정했지만 처리량 증가와 p95 감소는 제한적이었습니다. 이후 API 흐름을 다시 점검해 댓글·좋아요·투표 결과·대댓글 수·고정 여부를 토픽 단위로 반복 조회하거나 계산하는 구조를 주요 개선 대상으로 선정했습니다.
+
+#### 개선
+
+- 댓글·좋아요 수를 `topic_id IN (...)`과 `GROUP BY`를 사용해 일괄 집계
+- 사용자의 고정 토픽 목록을 한 번만 조회하고 응답 생성 과정에서 재사용
+- 선택지별 투표 수를 `topic_id`, `vote_index` 기준으로 한 번에 집계
+- 대댓글 수를 여러 토픽 기준으로 조회하는 `count_by_topic_ids()` 추가
+- 조회·집계 조건에 맞춰 다음 인덱스 보강
+  - `votes(topic_id, vote_index)`
+  - `comments(topic_id, is_deleted)`
+  - `replies(comment_id)`
+- MySQL `EXPLAIN`에서 `ix_votes_topic_vote_index` 사용과 `Using where; Using index` 확인
+
+```sql
+SELECT topic_id, COUNT(*) AS comment_count
+FROM comments
+WHERE topic_id IN (...)
+  AND is_deleted = FALSE
+GROUP BY topic_id;
+```
+
+#### 검증 결과
+
+로컬 Docker 20 VU 테스트에서 평균 응답 시간은 **239.15ms → 140.4ms로 41.3%**, p95는 **437.21ms → 297.05ms로 32.1% 감소**했습니다.
+
+개선 사항을 운영 환경에 배포한 뒤 동일한 AWS EC2 300 VU·5분 조건으로 3회 반복 측정했습니다. 처리량은 **37.02 → 평균 94.75 req/s로 약 2.6배 증가**했고, 세 번의 결과도 **93.34~95.85 req/s** 범위로 유지됐습니다. 평균 응답 시간은 **7.00초 → 2.14초**로 감소했습니다.
 
 ### 3. GitHub Actions 기반 CI/CD 및 운영 검증 자동화
 
