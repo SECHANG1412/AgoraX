@@ -6,6 +6,7 @@ from app.db.schemas.replys import ReplyRead, ReplyCreate, ReplyUpdate
 from app.services.notification import NotificationService
 from app.db.schemas.admin import AdminDeleteResponse
 from app.services.admin_action_log import AdminActionLogService
+from app.services.topic import TopicService
 
 
 class ReplyService:
@@ -14,8 +15,9 @@ class ReplyService:
         db: AsyncSession, user_id: int, reply_data: ReplyCreate
     ) -> ReplyRead:
         comment = await CommentCrud.get_by_id(db, reply_data.comment_id)
-        if not comment:
+        if not comment or comment.is_hidden:
             raise HTTPException(status_code=404, detail="Comment not found")
+        await TopicService.get_public_topic(db, comment.topic_id)
         if getattr(comment, "is_deleted", False):
             raise HTTPException(status_code=400, detail="Cannot reply to a deleted comment")
         parent_reply = None

@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.crud import CommentCrud, LikeCrud, ReplyCrud, TopicCrud, UserCrud
+from app.db.crud import CommentCrud, LikeCrud, ReplyCrud, UserCrud
 from app.db.schemas.admin import AdminDeleteResponse
 from app.db.models import Comment
 from app.db.schemas.comments import (
@@ -14,6 +14,7 @@ from app.db.schemas.replys import ReplyRead
 from app.services.admin_action_log import AdminActionLogService
 from app.services.notification import NotificationService
 from app.services.reply import ReplyService
+from app.services.topic import TopicService
 
 
 class CommentService:
@@ -21,9 +22,7 @@ class CommentService:
     async def create(
         db: AsyncSession, user_id: int, comment_data: CommentCreate
     ) -> CommentRead:
-        topic = await TopicCrud.get_by_id(db, comment_data.topic_id)
-        if not topic:
-            raise HTTPException(status_code=404, detail="Topic not found")
+        topic = await TopicService.get_public_topic(db, comment_data.topic_id)
         try:
             comment = await CommentCrud.create(db, comment_data, user_id)
             actor = await UserCrud.get_by_id(db, user_id)
@@ -100,9 +99,7 @@ class CommentService:
     async def get_all_by_topic_id(
         db: AsyncSession, topic_id: int, user_id: int | None = None
     ) -> list[CommentRead]:
-        topic = await TopicCrud.get_by_id(db, topic_id)
-        if not topic:
-            raise HTTPException(status_code=404, detail="Topic not found")
+        await TopicService.get_public_topic(db, topic_id)
         comments = await CommentCrud.get_all_by_topic_id(db, topic_id)
         comment_ids = [comment.comment_id for comment in comments]
         replies_by_comment_id = await ReplyService.get_all_by_comment_ids(
