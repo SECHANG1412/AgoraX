@@ -26,6 +26,13 @@ from app.services.notification import NotificationService
 
 class TopicService:
     @staticmethod
+    async def get_public_topic(db: AsyncSession, topic_id: int) -> Topic:
+        topic = await TopicCrud.get_public_by_id(db, topic_id)
+        if not topic:
+            raise HTTPException(status_code=404, detail="Topic not found")
+        return topic
+
+    @staticmethod
     def is_closed(topic: Topic, now: datetime | None = None) -> bool:
         if topic.expires_at is None:
             return False
@@ -55,9 +62,7 @@ class TopicService:
     async def get_by_id(
         db: AsyncSession, topic_id: int, user_id: int | None
     ) -> TopicRead | None:
-        db_topic = await TopicCrud.get_public_by_id(db, topic_id)
-        if not db_topic:
-            raise HTTPException(status_code=404, detail="Topic not found")
+        db_topic = await TopicService.get_public_topic(db, topic_id)
         return await TopicService._build_topic_read(db, db_topic, user_id)
 
     @staticmethod

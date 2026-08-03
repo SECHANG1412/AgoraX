@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.crud import VoteCrud, TopicCrud
+from app.db.crud import VoteCrud
 from app.db.models import Topic
 from app.db.schemas.votes import VoteCreate, VoteRead
 from app.services.topic import TopicService
@@ -14,9 +14,7 @@ class VoteService:
 
     @staticmethod
     async def create(db: AsyncSession, vote_data: VoteCreate, user_id: int) -> VoteRead:
-        topic = await TopicCrud.get_by_id(db, vote_data.topic_id)
-        if not topic:
-            raise HTTPException(status_code=404, detail="토픽을 찾을 수 없습니다.")
+        topic = await TopicService.get_public_topic(db, vote_data.topic_id)
 
         if TopicService.is_closed(topic):
             raise HTTPException(status_code=400, detail="마감된 토픽입니다.")
@@ -48,9 +46,7 @@ class VoteService:
     async def get_statistics(
         db: AsyncSession, topic_id: int, time_range: str, interval: str | None
     ):
-        topic = await TopicCrud.get_by_id(db, topic_id)
-        if not topic:
-            raise HTTPException(status_code=404, detail="토픽을 찾을 수 없습니다.")
+        topic = await TopicService.get_public_topic(db, topic_id)
 
         is_all_time = time_range.lower() == "all"
         delta = None if is_all_time else VoteService._parse_interval(time_range)

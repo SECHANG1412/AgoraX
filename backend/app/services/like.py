@@ -1,8 +1,9 @@
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.crud import LikeCrud, TopicCrud, CommentCrud, ReplyCrud, UserCrud
+from app.db.crud import LikeCrud, CommentCrud, ReplyCrud, UserCrud
 from app.services.notification import NotificationService
+from app.services.topic import TopicService
 
 
 class LikeService:
@@ -39,9 +40,7 @@ class LikeService:
     @staticmethod
     async def toggle_topic_like(db: AsyncSession, user_id: int, topic_id: int) -> bool:
         try:
-            topic = await TopicCrud.get_by_id(db, topic_id)
-            if not topic:
-                raise HTTPException(status_code=404, detail="Topic not found")
+            topic = await TopicService.get_public_topic(db, topic_id)
 
             like = await LikeCrud.get_topic_like_by_user_and_topic(
                 db, user_id, topic_id
@@ -78,8 +77,9 @@ class LikeService:
     ) -> bool:
         try:
             comment = await CommentCrud.get_by_id(db, comment_id)
-            if not comment:
+            if not comment or comment.is_hidden:
                 raise HTTPException(status_code=404, detail="Comment not found")
+            await TopicService.get_public_topic(db, comment.topic_id)
 
             like = await LikeCrud.get_comment_like_by_user_and_comment(
                 db, user_id, comment_id
@@ -116,6 +116,10 @@ class LikeService:
             reply = await ReplyCrud.get_by_id(db, reply_id)
             if not reply:
                 raise HTTPException(status_code=404, detail="Reply not found")
+            comment = await CommentCrud.get_by_id(db, reply.comment_id)
+            if not comment or comment.is_hidden:
+                raise HTTPException(status_code=404, detail="Reply not found")
+            await TopicService.get_public_topic(db, comment.topic_id)
 
             like = await LikeCrud.get_reply_like_by_user_and_reply(
                 db, user_id, reply_id
@@ -125,7 +129,6 @@ class LikeService:
                 result = False
             else:
                 created_like = await LikeCrud.create_reply_like(db, user_id, reply_id)
-                comment = await CommentCrud.get_by_id(db, reply.comment_id)
                 actor = await UserCrud.get_by_id(db, user_id)
                 await NotificationService.create_if_not_self(
                     db,
