@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.settings import settings
 from app.perf import begin_request_capture, finish_request_capture
 
 
 class PerformanceMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
-        if request.headers.get("X-Perf-Debug") != "1":
+        if (
+            not settings.performance_debug_enabled
+            or request.headers.get("X-Perf-Debug") != "1"
+        ):
             return await call_next(request)
 
         trace_id = begin_request_capture()

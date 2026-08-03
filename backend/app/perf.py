@@ -9,6 +9,9 @@ from typing import Any
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+CAPTURED_STATS_MAX_ENTRIES = 100
+CAPTURED_STATS_TTL_SECONDS = 600
+
 
 @dataclass
 class QueryRecord:
@@ -39,9 +42,25 @@ _captured_stats: dict[str, RequestPerfStats] = {}
 _registered_engine_ids: set[int] = set()
 
 
+def _prune_captured_stats(now: float) -> None:
+    expired_trace_ids = [
+        trace_id
+        for trace_id, stats in _captured_stats.items()
+        if now - stats.started_at >= CAPTURED_STATS_TTL_SECONDS
+    ]
+    for trace_id in expired_trace_ids:
+        _captured_stats.pop(trace_id, None)
+
+    while len(_captured_stats) > CAPTURED_STATS_MAX_ENTRIES:
+        oldest_trace_id = next(iter(_captured_stats))
+        _captured_stats.pop(oldest_trace_id, None)
+
+
 def begin_request_capture() -> str:
     trace_id = uuid.uuid4().hex
-    _current_stats.set(RequestPerfStats(trace_id=trace_id, started_at=time.perf_counter()))
+    _current_stats.set(
+        RequestPerfStats(trace_id=trace_id, started_at=time.perf_counter())
+    )
     return trace_id
 
 
@@ -52,12 +71,19 @@ def finish_request_capture() -> RequestPerfStats | None:
 
     stats.response_time_ms = (time.perf_counter() - stats.started_at) * 1000
     _captured_stats[stats.trace_id] = stats
+    _prune_captured_stats(time.perf_counter())
     _current_stats.set(None)
     return stats
 
 
 def get_captured_stats(trace_id: str) -> RequestPerfStats | None:
+    _prune_captured_stats(time.perf_counter())
     return _captured_stats.get(trace_id)
+
+
+def pop_captured_stats(trace_id: str) -> RequestPerfStats | None:
+    _prune_captured_stats(time.perf_counter())
+    return _captured_stats.pop(trace_id, None)
 
 
 def clear_captured_stats() -> None:
@@ -73,10 +99,8 @@ def _normalize_sql(statement: str) -> str:
     return " ".join(statement.split())
 
 
-async def build_explain_rows(
-    db: AsyncSession, trace_id: str
-) -> list[dict[str, Any]]:
-    stats = get_captured_stats(trace_id)
+async def build_explain_rows(db: AsyncSession, trace_id: str) -> list[dict[str, Any]]:
+    stats = pop_captured_stats(trace_id)
     if not stats:
         return []
 
