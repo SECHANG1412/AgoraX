@@ -14,9 +14,7 @@ class VoteService:
 
     @staticmethod
     async def create(db: AsyncSession, vote_data: VoteCreate, user_id: int) -> VoteRead:
-        topic = await TopicCrud.get_by_id(db, vote_data.topic_id)
-        if not topic:
-            raise HTTPException(status_code=404, detail="토픽을 찾을 수 없습니다.")
+        topic = await TopicService.get_public_topic(db, vote_data.topic_id)
 
         if TopicService.is_closed(topic):
             raise HTTPException(status_code=400, detail="마감된 토픽입니다.")
