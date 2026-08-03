@@ -21,6 +21,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
 os.environ.setdefault("ACCESS_TOKEN_EXPIRE", "900")
 os.environ.setdefault("REFRESH_TOKEN_EXPIRE", "604800")
+os.environ.setdefault("PERFORMANCE_DEBUG_ENABLED", "true")
 
 from app.core.jwt_handler import create_access_token, create_refresh_token
 from app.db import models  # noqa: F401 - register models to Base metadata

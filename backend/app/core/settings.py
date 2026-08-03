@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     redis_url: str = Field("redis://localhost:6379/0", alias="REDIS_URL")
     rate_limit_enabled: bool = Field(True, alias="RATE_LIMIT_ENABLED")
     rate_limit_fail_open: bool = Field(True, alias="RATE_LIMIT_FAIL_OPEN")
+    performance_debug_enabled: bool = Field(False, alias="PERFORMANCE_DEBUG_ENABLED")
 
     model_config = SettingsConfigDict(
         env_file=".env",
