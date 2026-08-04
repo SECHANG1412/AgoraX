@@ -24,7 +24,7 @@ async def create_topic(
 async def list_topics(
     db: AsyncSession = Depends(get_db),
     user_id: int | None = Depends(get_user_id_optional),
-    search: str | None = Query(None, min_length=1),
+    search: str | None = Query(None, min_length=1, max_length=100),
     category: str | None = Query(None),
     sort: Literal["created_at", "like_count"] = Query("created_at"),
     status: TopicStatus = Query("active"),
@@ -47,7 +47,7 @@ async def list_topics(
 async def count_topics(
     db: AsyncSession = Depends(get_db),
     user_id: int | None = Depends(get_user_id_optional),
-    search: str | None = Query(None, min_length=1),
+    search: str | None = Query(None, min_length=1, max_length=100),
     category: str | None = Query(None),
     status: TopicStatus = Query("active"),
 ):
