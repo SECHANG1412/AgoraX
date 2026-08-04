@@ -17,7 +17,21 @@ def _route_path(request) -> str:
 class PrometheusMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         started_at = time.perf_counter()
-        response = await call_next(request)
+
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration = time.perf_counter() - started_at
+            route_path = _route_path(request)
+            method = request.method
+
+            http_requests_total.labels(
+                method=method, path=route_path, status='500'
+            ).inc()
+            http_request_duration_seconds.labels(
+                method=method, path=route_path
+            ).observe(duration)
+            raise
 
         duration = time.perf_counter() - started_at
         route_path = _route_path(request)
