@@ -351,3 +351,13 @@ async def test_topics_list_validation_errors(authenticated_client):
     assert invalid_limit.status_code == 422
     assert invalid_offset.status_code == 422
     assert invalid_sort.status_code == 422
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('path', ['/topics', '/topics/count'])
+async def test_topic_search_length_boundary(authenticated_client, path):
+    accepted = await authenticated_client.get(path, params={'search': 'a' * 100})
+    rejected = await authenticated_client.get(path, params={'search': 'a' * 101})
+
+    assert accepted.status_code == 200
+    assert rejected.status_code == 422
