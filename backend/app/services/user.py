@@ -24,6 +24,8 @@ from app.db.schemas.users import (
     UserUpdate,
 )
 
+EMAIL_VALIDATION_TIMEOUT_SECONDS = 3.0
+
 
 class UserService:
     _USERNAME_TAKEN_MESSAGE = "이미 사용 중인 이름입니다."
@@ -46,12 +48,20 @@ class UserService:
         Returns the normalized email or raises HTTPException.
         """
         try:
-            v = await asyncio.to_thread(
-                validate_email,
-                email,
-                check_deliverability=True,
+            v = await asyncio.wait_for(
+                asyncio.to_thread(
+                    validate_email,
+                    email,
+                    check_deliverability=True,
+                ),
+                timeout=EMAIL_VALIDATION_TIMEOUT_SECONDS,
             )
             normalized = v.email
+        except TimeoutError:
+            raise HTTPException(
+                status_code=503,
+                detail="이메일 확인 서비스 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요.",
+            )
         except EmailNotValidError:
             raise HTTPException(status_code=400, detail="유효한 이메일을 입력해 주세요.")
 
