@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from httpx import AsyncClient
 
+from app.core.jwt_handler import create_refresh_token
 from app.db.crud import UserCrud
 from tests.factories import create_comment, create_topic, create_user
 
@@ -67,6 +68,70 @@ async def test_update_me_hashes_password_before_saving(
     db_user = await UserCrud.get_by_id(db_session, auth_user.user_id)
     assert db_user is not None
     assert db_user.password == "hashed::new-plain-password"
+
+
+@pytest.mark.asyncio
+async def test_password_change_invalidates_existing_session(
+    authenticated_client: AsyncClient,
+    db_session,
+    auth_user,
+    monkeypatch,
+):
+    previous_refresh_token = create_refresh_token(auth_user.user_id)
+
+    async def fake_get_password_hash(password: str) -> str:
+        return f"hashed::{password}"
+
+    monkeypatch.setattr("app.services.user.get_password_hash", fake_get_password_hash)
+
+    await UserCrud.update_refresh_token_by_id(
+        db_session, auth_user.user_id, previous_refresh_token
+    )
+    await db_session.commit()
+    authenticated_client.cookies.set("refresh_token", previous_refresh_token)
+
+    response = await authenticated_client.put(
+        "/users/me",
+        json={"password": "new-secure-password"},
+    )
+
+    assert response.status_code == 200
+    await db_session.refresh(auth_user)
+    assert auth_user.refresh_token is None
+
+    set_cookie_headers = response.headers.get_list("set-cookie")
+    for cookie_name in ("access_token", "refresh_token", "csrf_token"):
+        assert any(
+            header.startswith(f"{cookie_name}=") and "Max-Age=0" in header
+            for header in set_cookie_headers
+        )
+
+    authenticated_client.cookies.set("refresh_token", previous_refresh_token)
+    authenticated_client.cookies.set("csrf_token", "test-csrf-token")
+    refresh_response = await authenticated_client.post("/users/refresh")
+
+    assert refresh_response.status_code == 401
+    assert refresh_response.json()["detail"] == "Invalid refresh token"
+
+
+@pytest.mark.asyncio
+async def test_profile_change_without_password_preserves_session(
+    authenticated_client: AsyncClient,
+    db_session,
+    auth_user,
+):
+    refresh_token = create_refresh_token(auth_user.user_id)
+    await UserCrud.update_refresh_token_by_id(db_session, auth_user.user_id, refresh_token)
+    await db_session.commit()
+
+    response = await authenticated_client.put(
+        "/users/me", json={"username": "updated-user"}
+    )
+
+    assert response.status_code == 200
+    await db_session.refresh(auth_user)
+    assert auth_user.refresh_token == refresh_token
+    assert response.headers.get_list("set-cookie") == []
 
 
 @pytest.mark.asyncio

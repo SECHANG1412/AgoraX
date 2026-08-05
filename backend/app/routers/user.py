@@ -36,10 +36,15 @@ async def get_user(
 @router.put("/me", response_model=UserRead)
 async def update_me(
     update: UserUpdate,
+    response: Response,
     user_id: int = Depends(get_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    return await UserService.update_user(db, user_id, update)
+    password_changed = update.password is not None
+    updated_user = await UserService.update_user(db, user_id, update)
+    if password_changed:
+        clear_auth_cookies(response)
+    return updated_user
 
 @router.get("/stats", response_model=UserStats)
 async def get_my_stats(
