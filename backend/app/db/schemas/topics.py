@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-TOPIC_TITLE_MAX_LENGTH = 80
+from app.db.schemas.content_limits import TOPIC_TITLE_MAX_LENGTH
 TOPIC_OPTION_COUNT = 2
 
 
