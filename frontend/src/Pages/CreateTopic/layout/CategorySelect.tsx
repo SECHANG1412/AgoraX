@@ -23,8 +23,8 @@ const CategorySelect = ({ categories, value, onChange }: CategorySelectProps) =>
         <option value="" disabled>
           카테고리를 선택하세요
         </option>
-        {categories.map((category, idx) => (
-          <option key={idx} value={category}>
+        {categories.map((category) => (
+          <option key={category} value={category}>
             {category}
           </option>
         ))}
