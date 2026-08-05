@@ -1,11 +1,21 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.db.schemas.replys import ReplyRead
+from app.db.schemas.content_limits import COMMENT_CONTENT_MAX_LENGTH
+
+
+def _strip_non_blank_content(value: str) -> str:
+    stripped = value.strip()
+    if not stripped:
+        raise ValueError('content must not be blank.')
+    return stripped
 
 
 class CommentBase(BaseModel):
     topic_id: int
-    content: str
+    content: str = Field(..., min_length=1, max_length=COMMENT_CONTENT_MAX_LENGTH)
+
+    _normalize_content = field_validator('content')(_strip_non_blank_content)
 
 
 class CommentCreate(CommentBase):
@@ -13,7 +23,9 @@ class CommentCreate(CommentBase):
 
 
 class CommentUpdate(BaseModel):
-    content: str
+    content: str = Field(..., min_length=1, max_length=COMMENT_CONTENT_MAX_LENGTH)
+
+    _normalize_content = field_validator('content')(_strip_non_blank_content)
 
 
 class CommentInDB(CommentBase):

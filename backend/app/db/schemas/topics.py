@@ -1,7 +1,13 @@
 from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-TOPIC_TITLE_MAX_LENGTH = 80
+from app.db.schemas.content_limits import (
+    TOPIC_CATEGORY_MAX_LENGTH,
+    TOPIC_DESCRIPTION_MAX_LENGTH,
+    TOPIC_OPTION_MAX_LENGTH,
+    TOPIC_TITLE_MAX_LENGTH,
+)
+
 TOPIC_OPTION_COUNT = 2
 
 
@@ -25,6 +31,44 @@ class TopicBase(BaseModel):
         if len(value) != TOPIC_OPTION_COUNT:
             raise ValueError("vote_options must contain exactly 2 options.")
         return value
+
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError('category must not be blank.')
+        if len(stripped) > TOPIC_CATEGORY_MAX_LENGTH:
+            raise ValueError(
+                f'category must not exceed {TOPIC_CATEGORY_MAX_LENGTH} characters.'
+            )
+        return stripped
+
+    @field_validator('description')
+    @classmethod
+    def validate_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError('description must not be blank.')
+        if len(stripped) > TOPIC_DESCRIPTION_MAX_LENGTH:
+            raise ValueError(
+                f'description must not exceed {TOPIC_DESCRIPTION_MAX_LENGTH} characters.'
+            )
+        return stripped
+
+    @field_validator('vote_options')
+    @classmethod
+    def validate_vote_option_content(cls, value: list[str]) -> list[str]:
+        normalized_options = [option.strip() for option in value]
+        if any(not option for option in normalized_options):
+            raise ValueError('vote options must not be blank.')
+        if any(len(option) > TOPIC_OPTION_MAX_LENGTH for option in normalized_options):
+            raise ValueError(
+                f'vote options must not exceed {TOPIC_OPTION_MAX_LENGTH} characters.'
+            )
+        return normalized_options
 
 
 class TopicCreate(TopicBase):
