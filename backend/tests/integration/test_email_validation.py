@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
+from app.db.crud import UserCrud
 from app.services.user import UserService
 
 
@@ -56,3 +57,57 @@ async def test_email_validation_returns_service_unavailable_on_timeout(monkeypat
     assert exc_info.value.detail == (
         "이메일 확인 서비스 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요."
     )
+
+
+@pytest.mark.asyncio
+async def test_signup_uses_normalized_email_from_validation(
+    client,
+    db_session,
+    monkeypatch,
+):
+    def normalize_email(email: str, *, check_deliverability: bool):
+        assert check_deliverability is True
+        return SimpleNamespace(email=email.lower())
+
+    async def hash_password(password: str) -> str:
+        return f"hashed::{password}"
+
+    monkeypatch.setattr("app.services.user.validate_email", normalize_email)
+    monkeypatch.setattr("app.services.user.get_password_hash", hash_password)
+
+    response = await client.post(
+        "/users/signup",
+        json={
+            "email": "Signup.User@Example.COM",
+            "username": "signup-user",
+            "password": "password123",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "signup.user@example.com"
+    assert await UserCrud.get_by_email(db_session, "signup.user@example.com")
+
+
+@pytest.mark.asyncio
+async def test_profile_email_update_uses_normalized_email_from_validation(
+    authenticated_client,
+    db_session,
+    auth_user,
+    monkeypatch,
+):
+    def normalize_email(email: str, *, check_deliverability: bool):
+        assert check_deliverability is True
+        return SimpleNamespace(email=email.lower())
+
+    monkeypatch.setattr("app.services.user.validate_email", normalize_email)
+
+    response = await authenticated_client.put(
+        "/users/me",
+        json={"email": "Updated.User@Example.COM"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "updated.user@example.com"
+    await db_session.refresh(auth_user)
+    assert auth_user.email == "updated.user@example.com"
