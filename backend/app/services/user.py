@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 from email_validator import EmailNotValidError, validate_email
@@ -45,7 +46,11 @@ class UserService:
         Returns the normalized email or raises HTTPException.
         """
         try:
-            v = validate_email(email, check_deliverability=True)
+            v = await asyncio.to_thread(
+                validate_email,
+                email,
+                check_deliverability=True,
+            )
             normalized = v.email
         except EmailNotValidError:
             raise HTTPException(status_code=400, detail="유효한 이메일을 입력해 주세요.")
