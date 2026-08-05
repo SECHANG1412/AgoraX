@@ -109,6 +109,8 @@ class UserService:
 
     @staticmethod
     async def update_user(db: AsyncSession, user_id: int, update: UserUpdate) -> UserRead:
+        password_changed = update.password is not None
+
         if update.email:
             update.email = UserService._validate_email(update.email)
             existing_email = await UserCrud.get_by_email(db, update.email)
@@ -127,6 +129,8 @@ class UserService:
             db_user = await UserCrud.update_by_id(db, user_id, update)
             if not db_user:
                 raise HTTPException(status_code=404, detail="User not found")
+            if password_changed:
+                db_user.refresh_token = None
             await db.commit()
             await db.refresh(db_user)
             return await UserService._build_user_read(db, db_user)
