@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/auth-context';
 import api from '../../utils/api';
 import type { InquiryCreateRequest, InquiryRead } from '../../types';
 
-const initialForm = {
+const INITIAL_FORM = {
   title: '',
   content: '',
 };
@@ -18,7 +18,7 @@ type ContactMessage = {
 const Contact = () => {
   const { isAuthenticated, isAuthLoading, user } = useAuth();
   const location = useLocation();
-  const [formData, setFormData] = useState(initialForm);
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<ContactMessage | null>(null);
 
@@ -39,7 +39,7 @@ const Contact = () => {
           content: formData.content.trim(),
         };
         await api.post<InquiryRead>('/inquiries', payload);
-        setFormData(initialForm);
+        setFormData(INITIAL_FORM);
         setMessage({ type: 'success', text: '문의가 접수되었습니다. 관리자 확인 후 처리 상태가 반영됩니다.' });
       } catch {
         setMessage({ type: 'error', text: '문의를 접수하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.' });
