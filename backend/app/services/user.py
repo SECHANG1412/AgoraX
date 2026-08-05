@@ -39,7 +39,7 @@ class UserService:
     }
 
     @staticmethod
-    def _validate_email(email: str) -> str:
+    async def _validate_email(email: str) -> str:
         """
         Validate email format and deliverability (MX) and block disposable domains.
         Returns the normalized email or raises HTTPException.
@@ -69,7 +69,7 @@ class UserService:
 
     @staticmethod
     async def signup(db: AsyncSession, user: UserCreate) -> UserRead:
-        user.email = UserService._validate_email(user.email)
+        user.email = await UserService._validate_email(user.email)
 
         if await UserCrud.get_by_normalized_username(db, user.username):
             raise HTTPException(status_code=400, detail=UserService._USERNAME_TAKEN_MESSAGE)
@@ -112,7 +112,7 @@ class UserService:
         password_changed = update.password is not None
 
         if update.email:
-            update.email = UserService._validate_email(update.email)
+            update.email = await UserService._validate_email(update.email)
             existing_email = await UserCrud.get_by_email(db, update.email)
             if existing_email and existing_email.user_id != user_id:
                 raise HTTPException(status_code=400, detail=UserService._EMAIL_TAKEN_MESSAGE)
