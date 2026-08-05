@@ -48,10 +48,13 @@ async def test_signup_creates_regular_user(client: AsyncClient, db_session, monk
     async def fake_hash_password(password: str) -> str:
         return f"hashed::{password}"
 
+    async def fake_validate_email(email: str) -> str:
+        return email
+
     monkeypatch.setattr("app.services.user.get_password_hash", fake_hash_password)
     monkeypatch.setattr(
         "app.services.user.UserService._validate_email",
-        staticmethod(lambda email: email),
+        staticmethod(fake_validate_email),
     )
 
     response = await client.post(
@@ -83,13 +86,16 @@ async def test_signup_rejects_duplicate_username_with_case_and_spaces(
     async def fake_hash_password(password: str) -> str:
         return f"hashed::{password}"
 
+    async def fake_validate_email(email: str) -> str:
+        return email
+
     await create_user(db_session, username="TakenName", email="taken@example.com")
     await db_session.commit()
 
     monkeypatch.setattr("app.services.user.get_password_hash", fake_hash_password)
     monkeypatch.setattr(
         "app.services.user.UserService._validate_email",
-        staticmethod(lambda email: email),
+        staticmethod(fake_validate_email),
     )
 
     response = await client.post(

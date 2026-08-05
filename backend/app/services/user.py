@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 from email_validator import EmailNotValidError, validate_email
@@ -23,6 +24,8 @@ from app.db.schemas.users import (
     UserUpdate,
 )
 
+EMAIL_VALIDATION_TIMEOUT_SECONDS = 3.0
+
 
 class UserService:
     _USERNAME_TAKEN_MESSAGE = "이미 사용 중인 이름입니다."
@@ -39,14 +42,26 @@ class UserService:
     }
 
     @staticmethod
-    def _validate_email(email: str) -> str:
+    async def _validate_email(email: str) -> str:
         """
         Validate email format and deliverability (MX) and block disposable domains.
         Returns the normalized email or raises HTTPException.
         """
         try:
-            v = validate_email(email, check_deliverability=True)
+            v = await asyncio.wait_for(
+                asyncio.to_thread(
+                    validate_email,
+                    email,
+                    check_deliverability=True,
+                ),
+                timeout=EMAIL_VALIDATION_TIMEOUT_SECONDS,
+            )
             normalized = v.email
+        except TimeoutError:
+            raise HTTPException(
+                status_code=503,
+                detail="이메일 확인 서비스 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요.",
+            )
         except EmailNotValidError:
             raise HTTPException(status_code=400, detail="유효한 이메일을 입력해 주세요.")
 
@@ -69,7 +84,7 @@ class UserService:
 
     @staticmethod
     async def signup(db: AsyncSession, user: UserCreate) -> UserRead:
-        user.email = UserService._validate_email(user.email)
+        user.email = await UserService._validate_email(user.email)
 
         if await UserCrud.get_by_normalized_username(db, user.username):
             raise HTTPException(status_code=400, detail=UserService._USERNAME_TAKEN_MESSAGE)
@@ -112,7 +127,7 @@ class UserService:
         password_changed = update.password is not None
 
         if update.email:
-            update.email = UserService._validate_email(update.email)
+            update.email = await UserService._validate_email(update.email)
             existing_email = await UserCrud.get_by_email(db, update.email)
             if existing_email and existing_email.user_id != user_id:
                 raise HTTPException(status_code=400, detail=UserService._EMAIL_TAKEN_MESSAGE)
