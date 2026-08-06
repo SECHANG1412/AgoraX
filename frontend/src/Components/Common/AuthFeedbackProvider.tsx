@@ -3,7 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { COMMON_MESSAGES } from '../../constants/messages';
 import { AUTH_FEEDBACK_EVENT } from '../../utils/toastEvents';
 
-const defaultOptions = {
+const DEFAULT_OPTIONS = {
   title: '',
   message: '',
   confirmText: COMMON_MESSAGES.confirm,
@@ -22,7 +22,7 @@ type AuthFeedbackProviderProps = {
 
 const AuthFeedbackProvider = ({ children }: AuthFeedbackProviderProps) => {
   const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState(defaultOptions);
+  const [options, setOptions] = useState(DEFAULT_OPTIONS);
   const resolverRef = useRef<(() => void) | null>(null);
 
   const resolve = useCallback(() => {
@@ -37,7 +37,7 @@ const AuthFeedbackProvider = ({ children }: AuthFeedbackProviderProps) => {
 
       resolverRef.current?.();
       resolverRef.current = typeof resolver === 'function' ? resolver : null;
-      setOptions({ ...defaultOptions, ...nextOptions });
+      setOptions({ ...DEFAULT_OPTIONS, ...nextOptions });
       setOpen(true);
     };
 
