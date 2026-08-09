@@ -106,6 +106,7 @@ GitHub Actions workflow: `.github/workflows/ci.yml`
   - `Backend Lint`
   - `Backend Integration Tests`
   - `Frontend Lint`
+  - `Frontend Typecheck`
   - `Frontend Build`
 - Merge policy:
   - Do not merge when a required status check fails.
@@ -120,12 +121,13 @@ ruff check app main.py tests
 pytest -q tests/integration
 ```
 
-Frontend checks are documented in `frontend/package.json` and run in CI as `npm run lint` and `npm run build`.
+Frontend checks are documented in `frontend/package.json` and run in CI as `npm run lint`, `npm run typecheck`, and `npm run build`.
 
 ## PR Closeout Checklist
 
 - [ ] `pytest -q tests/integration` passes locally
 - [ ] `ruff check app main.py tests` passes locally when backend code changed
+- [ ] `npm run lint`, `npm run typecheck`, and `npm run build` pass locally when frontend code changed
 - [ ] test docs still match the actual suite scope and run instructions
 - [ ] CI required checks are green on the PR
 - [ ] docs updated if API contract or test coverage changed

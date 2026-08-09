@@ -25,17 +25,20 @@ React와 Vite 기반으로 구현한 Waggle 프론트엔드입니다.
 ## 실행 방법
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 개발 서버 기본 주소는 `http://localhost:3000`입니다.
 
+`package-lock.json`을 기준으로 재현 가능한 의존성을 설치하기 위해 로컬 개발과 CI 모두 `npm ci`를 사용합니다. 의존성을 추가하거나 갱신하여 잠금 파일을 변경해야 할 때만 `npm install`을 사용합니다.
+
 ## 검증
 
 ```bash
 npm run lint
+npm run typecheck
 npm run build
 ```
 
-CI에서도 위 검사를 실행해 merge 전에 프론트엔드 정적 검사와 production build 가능 여부를 확인합니다.
+CI에서도 위 검사를 실행해 merge 전에 프론트엔드 lint, TypeScript 타입 검사와 production build 가능 여부를 확인합니다.

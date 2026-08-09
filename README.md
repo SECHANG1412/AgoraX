@@ -18,12 +18,13 @@
 1. [프로젝트 개요](#프로젝트-개요)
 2. [핵심 성과](#핵심-성과)
 3. [기술 스택](#기술-스택)
-4. [시스템 아키텍처](#시스템-아키텍처)
-5. [핵심 문제 해결](#핵심-문제-해결)
-6. [주요 기능](#주요-기능)
-7. [실행 방법](#실행-방법)
-8. [테스트 및 성능 검증](#테스트-및-성능-검증)
-9. [향후 개선 계획](#향후-개선-계획)
+4. [프로젝트 구조](#프로젝트-구조)
+5. [시스템 아키텍처](#시스템-아키텍처)
+6. [핵심 문제 해결](#핵심-문제-해결)
+7. [주요 기능](#주요-기능)
+8. [실행 방법](#실행-방법)
+9. [테스트 및 성능 검증](#테스트-및-성능-검증)
+10. [향후 개선 계획](#향후-개선-계획)
 
 ## 프로젝트 개요
 
@@ -53,6 +54,31 @@ Waggle은 사용자가 다양한 주제의 2지선다 토픽을 만들고, 투�
 | CI/CD | GitHub Actions |
 | Observability | Prometheus, Grafana, CloudWatch |
 | Test | Pytest, Ruff, ESLint, k6 |
+
+## 프로젝트 구조
+
+```text
+.
+├── backend/
+│   ├── app/
+│   │   ├── routers/      # API 엔드포인트
+│   │   ├── services/     # 도메인 로직과 외부 연동
+│   │   ├── db/           # SQLAlchemy 모델·스키마·CRUD
+│   │   ├── middleware/   # 인증·보안·요청 처리 미들웨어
+│   │   └── admin/        # 관리자 기능
+│   ├── alembic/          # 데이터베이스 마이그레이션
+│   └── tests/integration/ # API 통합 테스트
+├── frontend/
+│   └── src/
+│       ├── Components/   # 재사용 UI 컴포넌트
+│       ├── Pages/        # 사용자·관리자 화면
+│       ├── hooks/        # 공통 React 훅
+│       └── utils/        # API 클라이언트와 공통 유틸리티
+├── k6/                   # API 부하·Rate Limit 검증 스크립트
+├── .github/workflows/    # CI와 배포 자동화
+├── docker-compose.yml    # 서비스·데이터베이스·관측 환경 구성
+└── prometheus.yml        # Prometheus 수집 대상 설정
+```
 
 ## 시스템 아키텍처
 
@@ -250,7 +276,7 @@ POST /manage-api/notifications/topic-close/dispatch
 ### 사전 요구사항
 
 - Docker 및 Docker Compose
-- 개별 개발 서버 실행 시 Python 3.12, Node.js 22
+- 개별 개발 서버 실행 시 Python 3.11, Node.js 20
 - 부하 테스트 실행 시 k6
 
 ### 1. 프로젝트 클론
