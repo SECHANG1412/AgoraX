@@ -37,7 +37,8 @@ npm run dev
 
 ```bash
 npm run lint
+npm run typecheck
 npm run build
 ```
 
-CI에서도 위 검사를 실행해 merge 전에 프론트엔드 정적 검사와 production build 가능 여부를 확인합니다.
+CI에서도 위 검사를 실행해 merge 전에 프론트엔드 lint, TypeScript 타입 검사와 production build 가능 여부를 확인합니다.
