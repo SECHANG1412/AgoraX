@@ -250,7 +250,7 @@ POST /manage-api/notifications/topic-close/dispatch
 ### 사전 요구사항
 
 - Docker 및 Docker Compose
-- 개별 개발 서버 실행 시 Python 3.12, Node.js 22
+- 개별 개발 서버 실행 시 Python 3.11, Node.js 20
 - 부하 테스트 실행 시 k6
 
 ### 1. 프로젝트 클론
