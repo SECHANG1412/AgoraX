@@ -68,6 +68,7 @@ The integration tests currently cover:
 - The schema is recreated at session start and dropped at session end.
 - Each test starts from a clean database because all tables are truncated by the `clean_db` fixture.
 - The temporary SQLite file is removed during teardown when possible.
+- The shared API client disables the real Redis startup connection. Rate limit tests use an in-process fake Redis client.
 
 ## Run
 
