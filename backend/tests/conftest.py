@@ -27,6 +27,7 @@ from app.core.jwt_handler import create_access_token, create_refresh_token
 from app.db import models  # noqa: F401 - register models to Base metadata
 from app.db.database import Base, get_db
 from app.perf import register_async_engine_perf_hooks
+import main as main_module
 from main import app
 from tests.factories import create_user
 
@@ -113,7 +114,11 @@ async def db_session(async_session_maker) -> AsyncIterator[AsyncSession]:
 
 
 @pytest.fixture
-async def client() -> AsyncIterator[AsyncClient]:
+async def client(monkeypatch: pytest.MonkeyPatch) -> AsyncIterator[AsyncClient]:
+    async def _disable_external_redis():
+        return None
+
+    monkeypatch.setattr(main_module, "create_redis_client", _disable_external_redis)
     async with LifespanManager(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://testserver") as async_client:
