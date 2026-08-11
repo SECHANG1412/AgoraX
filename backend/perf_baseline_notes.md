@@ -11,8 +11,8 @@ The baseline files capture local diagnostic output for selected read APIs. They 
 
 File roles:
 
-- `backend/perf_baseline.md`: markdown-friendly baseline for review and documentation
-- `backend/perf_baseline.txt`: raw text copy kept for quick terminal comparison
+- `backend/perf_baseline.md`: markdown-friendly baseline and EXPLAIN summary for review
+- `backend/perf_baseline.txt`: plain-text baseline kept for quick terminal comparison
 
 Current baseline targets:
 
@@ -29,9 +29,9 @@ Run from `backend/`:
 pytest -q -s tests/integration/test_read_api_perf_baseline.py
 ```
 
-The test prints a summary table and EXPLAIN output to stdout. Copy the output into the baseline file only when the change intentionally updates the read API baseline.
+The test prints a summary table and complete EXPLAIN output to stdout. Update the baseline files only when a read API change intentionally changes the accepted query count or execution plan.
 
-When updating a baseline file, copy only the summary table and EXPLAIN sections. Do not copy pytest runner output such as `.` or `1 passed in ...`.
+Keep the endpoint labels, query counts, diagnostic timings, and EXPLAIN summaries aligned with the same test run. Do not copy pytest runner output such as `.` or `1 passed in ...`.
 
 ## Reading the Numbers
 
@@ -46,6 +46,9 @@ When updating a baseline file, copy only the summary table and EXPLAIN sections.
 
 - These numbers are local diagnostic values, not production SLOs.
 - Results can vary depending on the local machine, test database, and seed data.
+- CI enforces only the query-count limits defined in `test_read_api_perf_baseline.py`.
+- Query time and response time remain informational because they vary by environment.
+- A query-count decrease passes automatically. An intentional increase requires review and an explicit limit and baseline update.
 - Keep the same test data and command when comparing before/after numbers.
 - Keep pytest runner output out of the baseline files so diffs only reflect measured query and EXPLAIN changes.
 - Use these files as supporting evidence together with k6 and server-side metrics when diagnosing read API bottlenecks.

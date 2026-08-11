@@ -52,6 +52,7 @@ The integration tests currently cover:
   - request-level query count, query time, and response time capture for read APIs
   - baseline capture for `/topics`, `/topics/{topic_id}`, `/comments/by-topic/{topic_id}`, `/votes/topic/{topic_id}`
   - EXPLAIN output capture and markdown baseline table output for before/after comparison
+  - deterministic query-count limits that fail CI when a read path adds unexpected queries
 
 ## Prerequisites
 
@@ -80,6 +81,7 @@ The integration tests currently cover:
   - `pytest -q tests/integration/test_comments_replies_api.py`
 - Run read baseline with printed metrics:
   - `pytest -q -s tests/integration/test_read_api_perf_baseline.py`
+- Query time and response time are diagnostic only; CI failure thresholds apply only to query counts.
 - Run one test:
   - `pytest -q tests/integration/test_security_auth_api.py -k oauth`
 
