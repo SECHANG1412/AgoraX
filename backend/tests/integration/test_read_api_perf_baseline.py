@@ -15,6 +15,13 @@ from tests.factories import (
     create_vote,
 )
 
+READ_API_MAX_QUERY_COUNTS = {
+    "/topics": 2,
+    "/topics/{topic_id}": 8,
+    "/comments/by-topic/{topic_id}": 15,
+    "/votes/topic/{topic_id}?time_range=all&interval=1h": 4,
+}
+
 
 def _format_plan(plan: Sequence[dict]) -> str:
     fragments: list[str] = []
@@ -67,6 +74,27 @@ def _print_explain(label: str, explain_rows: list[dict]) -> None:
     for row in explain_rows:
         print(f"- {row['sql']}")
         print(f"  {_format_plan(row['plan'])}")
+
+
+def _assert_query_count_limits(rows: list[dict]) -> None:
+    for row in rows:
+        query_limit = READ_API_MAX_QUERY_COUNTS[row["endpoint"]]
+        assert row["query_count"] <= query_limit, (
+            f"{row['endpoint']} query count increased: "
+            f"expected <= {query_limit}, actual {row['query_count']}"
+        )
+
+
+def test_query_count_limits_report_regression():
+    rows = [
+        {
+            "endpoint": "/topics",
+            "query_count": READ_API_MAX_QUERY_COUNTS["/topics"] + 1,
+        }
+    ]
+
+    with pytest.raises(AssertionError, match=r"/topics query count increased"):
+        _assert_query_count_limits(rows)
 
 
 @pytest.mark.asyncio
@@ -161,14 +189,14 @@ async def test_read_api_perf_baseline(
 
     baseline_rows = [
         _baseline_row("/topics", topics_response, topics_explain),
-        _baseline_row(f"/topics/{topic.topic_id}", topic_response, topic_explain),
+        _baseline_row("/topics/{topic_id}", topic_response, topic_explain),
         _baseline_row(
-            f"/comments/by-topic/{topic.topic_id}",
+            "/comments/by-topic/{topic_id}",
             comments_response,
             comments_explain,
         ),
         _baseline_row(
-            f"/votes/topic/{topic.topic_id}?time_range=all&interval=1h",
+            "/votes/topic/{topic_id}?time_range=all&interval=1h",
             vote_stats_response,
             vote_stats_explain,
         ),
@@ -181,6 +209,7 @@ async def test_read_api_perf_baseline(
     _print_explain("/topics/{topic_id}", topic_explain)
     _print_explain("/comments/by-topic/{topic_id}", comments_explain)
     _print_explain("/votes/topic/{topic_id}", vote_stats_explain)
+    _assert_query_count_limits(baseline_rows)
     assert baseline_rows[0]["query_count"] > 0
     assert baseline_rows[1]["query_count"] > 0
     assert baseline_rows[2]["query_count"] > 0
