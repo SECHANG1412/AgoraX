@@ -24,10 +24,11 @@ const STATUS_LABELS: Record<InquiryStatus, string> = {
 };
 
 type Message = { type: 'success' | 'error'; text: string };
+type DashboardResource = 'inquiries' | 'topics' | 'comments' | 'reports' | 'logs';
 
 type StatCardProps = {
   label: string;
-  value: number;
+  value: number | null;
   to: string;
 };
 
@@ -37,7 +38,9 @@ const StatCard = ({ label, value, to }: StatCardProps) => (
     className="rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-blue-50 sm:p-5"
   >
     <p className="break-words text-sm font-semibold text-slate-600">{label}</p>
-    <p className="mt-2 text-2xl font-bold text-slate-900 sm:mt-3 sm:text-3xl">{value}</p>
+    <p className="mt-2 text-2xl font-bold text-slate-900 sm:mt-3 sm:text-3xl">
+      {value === null ? '확인 실패' : value}
+    </p>
   </Link>
 );
 
@@ -63,30 +66,55 @@ const Admin = () => {
   const [logs, setLogs] = useState<AdminActionLogRead[]>([]);
   const [message, setMessage] = useState<Message | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [failedResources, setFailedResources] = useState<Set<DashboardResource>>(new Set());
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
     setMessage(null);
-    try {
-      const [inquiriesResponse, topicsResponse, commentsResponse, reportsResponse, logsResponse] =
-        await Promise.all([
-          api.get<InquiryRead[]>('/manage-api/inquiries'),
-          api.get<TopicAdminRead[]>('/manage-api/topics'),
-          api.get<CommentAdminRead[]>('/manage-api/comments'),
-          api.get<ReportAdminRead[]>('/manage-api/reports', { params: { status: 'pending' } }),
-          api.get<AdminActionLogRead[]>('/manage-api/logs', { params: { limit: 5 } }),
-        ]);
+    const [inquiriesResult, topicsResult, commentsResult, reportsResult, logsResult] =
+      await Promise.allSettled([
+        api.get<InquiryRead[]>('/manage-api/inquiries'),
+        api.get<TopicAdminRead[]>('/manage-api/topics'),
+        api.get<CommentAdminRead[]>('/manage-api/comments'),
+        api.get<ReportAdminRead[]>('/manage-api/reports', { params: { status: 'pending' } }),
+        api.get<AdminActionLogRead[]>('/manage-api/logs', { params: { limit: 5 } }),
+      ]);
 
-      setInquiries(inquiriesResponse.data);
-      setTopics(topicsResponse.data);
-      setComments(commentsResponse.data);
-      setReports(reportsResponse.data);
-      setLogs(logsResponse.data);
-    } catch {
-      setMessage({ type: 'error', text: '관리자 대시보드를 불러오지 못했습니다.' });
-    } finally {
-      setIsLoading(false);
+    const nextFailedResources = new Set<DashboardResource>();
+
+    if (inquiriesResult.status === 'fulfilled') {
+      setInquiries(inquiriesResult.value.data);
+    } else {
+      nextFailedResources.add('inquiries');
     }
+    if (topicsResult.status === 'fulfilled') {
+      setTopics(topicsResult.value.data);
+    } else {
+      nextFailedResources.add('topics');
+    }
+    if (commentsResult.status === 'fulfilled') {
+      setComments(commentsResult.value.data);
+    } else {
+      nextFailedResources.add('comments');
+    }
+    if (reportsResult.status === 'fulfilled') {
+      setReports(reportsResult.value.data);
+    } else {
+      nextFailedResources.add('reports');
+    }
+    if (logsResult.status === 'fulfilled') {
+      setLogs(logsResult.value.data);
+    } else {
+      nextFailedResources.add('logs');
+    }
+
+    setFailedResources(nextFailedResources);
+    if (nextFailedResources.size === 5) {
+      setMessage({ type: 'error', text: '관리자 대시보드를 불러오지 못했습니다.' });
+    } else if (nextFailedResources.size > 0) {
+      setMessage({ type: 'error', text: '일부 관리자 정보를 불러오지 못했습니다.' });
+    }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -136,11 +164,31 @@ const Admin = () => {
       {message && <p className="mb-4 text-sm font-semibold text-red-600">{message.text}</p>}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard label="미처리 문의" value={stats.pendingInquiries} to="/manage/inquiries" />
-        <StatCard label="완료 문의" value={stats.resolvedInquiries} to="/manage/inquiries" />
-        <StatCard label="미처리 신고" value={stats.pendingReports} to="/manage/reports" />
-        <StatCard label="관리 대상 토픽" value={stats.topics} to="/manage/topics" />
-        <StatCard label="관리 대상 댓글" value={stats.comments} to="/manage/comments" />
+        <StatCard
+          label="미처리 문의"
+          value={failedResources.has('inquiries') ? null : stats.pendingInquiries}
+          to="/manage/inquiries"
+        />
+        <StatCard
+          label="완료 문의"
+          value={failedResources.has('inquiries') ? null : stats.resolvedInquiries}
+          to="/manage/inquiries"
+        />
+        <StatCard
+          label="미처리 신고"
+          value={failedResources.has('reports') ? null : stats.pendingReports}
+          to="/manage/reports"
+        />
+        <StatCard
+          label="관리 대상 토픽"
+          value={failedResources.has('topics') ? null : stats.topics}
+          to="/manage/topics"
+        />
+        <StatCard
+          label="관리 대상 댓글"
+          value={failedResources.has('comments') ? null : stats.comments}
+          to="/manage/comments"
+        />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -154,6 +202,8 @@ const Admin = () => {
 
           {isLoading ? (
             <p className="px-4 py-8 text-sm text-slate-500">최근 문의를 불러오는 중입니다.</p>
+          ) : failedResources.has('inquiries') ? (
+            <p className="px-4 py-8 text-sm font-semibold text-red-600">최근 문의를 불러오지 못했습니다.</p>
           ) : recentInquiries.length === 0 ? (
             <p className="px-4 py-8 text-sm text-slate-500">등록된 문의가 없습니다.</p>
           ) : (
@@ -187,6 +237,8 @@ const Admin = () => {
 
           {isLoading ? (
             <p className="px-4 py-8 text-sm text-slate-500">최근 조치를 불러오는 중입니다.</p>
+          ) : failedResources.has('logs') ? (
+            <p className="px-4 py-8 text-sm font-semibold text-red-600">최근 관리자 조치를 불러오지 못했습니다.</p>
           ) : logs.length === 0 ? (
             <p className="px-4 py-8 text-sm text-slate-500">기록된 관리자 조치가 없습니다.</p>
           ) : (
