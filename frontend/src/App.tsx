@@ -43,7 +43,7 @@ const getResponseStatus = (error: unknown) => {
   return undefined;
 };
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const location = useLocation();
 
@@ -80,7 +80,7 @@ const RootLayout = () => (
   </div>
 );
 
-const AdminRoute = () => {
+export const AdminRoute = () => {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const location = useLocation();
   const [status, setStatus] = useState<AdminStatus>('checking');
