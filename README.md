@@ -361,15 +361,18 @@ pytest -q tests/integration
 ruff check app main.py tests
 ```
 
-### Frontend 정적 검증 및 build
+### Frontend 회귀 테스트, 정적 검증 및 build
 
 ```bash
 cd frontend
 npm ci
+npm run test
 npm run lint
 npm run typecheck
 npm run build
 ```
+
+프론트엔드 회귀 테스트는 관리자 대시보드의 API 부분 실패 처리와 인증·관리자 경로 접근 제어를 API 대역으로 검증합니다.
 
 ### k6 부하 테스트
 
