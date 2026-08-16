@@ -54,7 +54,10 @@ async def test_admin_can_list_users(client: AsyncClient, db_session, set_auth_co
 
     assert response.status_code == 200
     payload = response.json()
-    users_by_id = {item["user_id"]: item for item in payload}
+    assert payload["total"] == 2
+    assert payload["limit"] == 20
+    assert payload["offset"] == 0
+    users_by_id = {item["user_id"]: item for item in payload["items"]}
 
     assert admin.user_id in users_by_id
     assert regular_user.user_id in users_by_id

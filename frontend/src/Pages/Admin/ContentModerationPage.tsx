@@ -6,9 +6,14 @@ import type {
   AdminContentListParams,
   AdminDeleteResponse,
   CommentModerationRequest,
+  PaginatedResponse,
   TopicModerationRequest,
 } from '../../types';
 import { formatKoreanDateTime } from '../../utils/date';
+import AdminListPagination from '../../Components/Admin/AdminListPagination';
+import AdminListSearch from '../../Components/Admin/AdminListSearch';
+
+const PAGE_SIZE = 20;
 
 const DATE_OPTIONS = [
   { value: 'all', label: '전체 기간' },
@@ -69,20 +74,32 @@ const ContentModerationPage = <TItem extends ContentModerationItem>({
   deleteEndpoint,
 }: ContentModerationPageProps<TItem>) => {
   const [items, setItems] = useState<TItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [reasonById, setReasonById] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<Message | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionItemId, setActionItemId] = useState<Id | null>(null);
 
-  const params = useMemo(() => getDateParams(dateFilter), [dateFilter]);
+  const params = useMemo(
+    () => ({
+      ...getDateParams(dateFilter),
+      ...(search && { search }),
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
+    }),
+    [dateFilter, page, search]
+  );
 
   const loadItems = useCallback(async () => {
     setIsLoading(true);
     setMessage(null);
     try {
-      const response = await api.get<TItem[]>(listEndpoint, { params });
-      setItems(response.data);
+      const response = await api.get<PaginatedResponse<TItem>>(listEndpoint, { params });
+      setItems(response.data.items);
+      setTotal(response.data.total);
     } catch {
       setMessage({ type: 'error', text: '목록을 불러오지 못했습니다.' });
     } finally {
@@ -96,10 +113,6 @@ const ContentModerationPage = <TItem extends ContentModerationItem>({
 
   const setReason = (itemId: Id, value: string) => {
     setReasonById((prev) => ({ ...prev, [itemId]: value }));
-  };
-
-  const removeItem = (itemId: Id) => {
-    setItems((prev) => prev.filter((item) => getItemId(item) !== itemId));
   };
 
   const handleDelete = async (item: TItem) => {
@@ -119,8 +132,12 @@ const ContentModerationPage = <TItem extends ContentModerationItem>({
     try {
       const payload: TopicModerationRequest | CommentModerationRequest = { reason };
       await api.patch<AdminDeleteResponse>(deleteEndpoint(itemId), payload);
-      removeItem(itemId);
       setReason(itemId, '');
+      if (items.length === 1 && page > 1) {
+        setPage((current) => current - 1);
+      } else {
+        await loadItems();
+      }
       setMessage({ type: 'success', text: '영구 삭제되었습니다. 삭제 내역은 감사 로그에 기록됩니다.' });
     } catch {
       setMessage({ type: 'error', text: '영구 삭제하지 못했습니다.' });
@@ -146,7 +163,10 @@ const ContentModerationPage = <TItem extends ContentModerationItem>({
           기간
           <select
             value={dateFilter}
-            onChange={(event) => setDateFilter(event.target.value as DateFilter)}
+            onChange={(event) => {
+              setDateFilter(event.target.value as DateFilter);
+              setPage(1);
+            }}
             className="mt-2 block min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
           >
             {DATE_OPTIONS.map((option) => (
@@ -159,6 +179,17 @@ const ContentModerationPage = <TItem extends ContentModerationItem>({
       </div>
 
       {message && <p className={`mb-4 text-sm font-semibold ${messageColor}`}>{message.text}</p>}
+
+      <div className="mb-4">
+        <AdminListSearch
+          value={search}
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder={`${title} 검색`}
+        />
+      </div>
 
       <section className="rounded-lg border border-slate-200 bg-white">
         {isLoading ? (
@@ -232,6 +263,14 @@ const ContentModerationPage = <TItem extends ContentModerationItem>({
               );
             })}
           </ul>
+        )}
+        {!isLoading && (
+          <AdminListPagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
+          />
         )}
       </section>
     </section>

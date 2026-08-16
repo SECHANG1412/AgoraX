@@ -23,6 +23,7 @@ from app.db.schemas.users import (
     UserStats,
     UserUpdate,
 )
+from app.db.schemas.pagination import PaginatedResponse
 
 EMAIL_VALIDATION_TIMEOUT_SECONDS = 3.0
 
@@ -78,9 +79,18 @@ class UserService:
         return await UserService._build_user_read(db, db_user)
 
     @staticmethod
-    async def get_all_for_admin(db: AsyncSession, limit: int = 100) -> list[UserRead]:
-        users = await UserCrud.get_all_for_admin(db, limit=limit)
-        return [await UserService._build_user_read(db, user) for user in users]
+    async def get_all_for_admin(
+        db: AsyncSession,
+        *,
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> PaginatedResponse[UserRead]:
+        users, total = await UserCrud.get_all_for_admin(
+            db, search=search, limit=limit, offset=offset
+        )
+        items = [await UserService._build_user_read(db, user) for user in users]
+        return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
     @staticmethod
     async def signup(db: AsyncSession, user: UserCreate) -> UserRead:

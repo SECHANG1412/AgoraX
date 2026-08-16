@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { formatKoreanDateTime } from '../../utils/date';
-import type { ReportAdminRead, ReportResolutionRequest, ReportStatus, ReportTargetType } from '../../types';
+import type { PaginatedResponse, ReportAdminRead, ReportResolutionRequest, ReportStatus, ReportTargetType } from '../../types';
+import AdminListPagination from '../../Components/Admin/AdminListPagination';
+import AdminListSearch from '../../Components/Admin/AdminListSearch';
+
+const PAGE_SIZE = 20;
 
 type StatusFilter = ReportStatus | 'all';
 type TargetFilter = ReportTargetType | 'all';
@@ -32,6 +36,9 @@ const REASON_LABELS: Record<string, string> = {
 
 const AdminReports = () => {
   const [reports, setReports] = useState<ReportAdminRead[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('pending');
   const [targetType, setTargetType] = useState<TargetFilter>('all');
   const [resolutionById, setResolutionById] = useState<Record<number, string>>({});
@@ -43,32 +50,27 @@ const AdminReports = () => {
     setIsLoading(true);
     setMessage(null);
     try {
-      const response = await api.get<ReportAdminRead[]>('/manage-api/reports', {
+      const response = await api.get<PaginatedResponse<ReportAdminRead>>('/manage-api/reports', {
         params: {
           ...(status !== 'all' && { status }),
           ...(targetType !== 'all' && { target_type: targetType }),
+          ...(search && { search }),
+          limit: PAGE_SIZE,
+          offset: (page - 1) * PAGE_SIZE,
         },
       });
-      setReports(response.data);
+      setReports(response.data.items);
+      setTotal(response.data.total);
     } catch {
       setMessage({ type: 'error', text: '신고 목록을 불러오지 못했습니다.' });
     } finally {
       setIsLoading(false);
     }
-  }, [status, targetType]);
+  }, [page, search, status, targetType]);
 
   useEffect(() => {
     loadReports();
   }, [loadReports]);
-
-  const groupedReports = useMemo(() => {
-    const unique = new Map<string, ReportAdminRead>();
-    reports.forEach((report) => {
-      const key = `${report.target_type}:${report.target_id}`;
-      if (!unique.has(key)) unique.set(key, report);
-    });
-    return [...unique.values()];
-  }, [reports]);
 
   const processReport = async (report: ReportAdminRead, action: 'resolve' | 'dismiss') => {
     const resolution = (resolutionById[report.report_id] || '').trim();
@@ -86,9 +88,11 @@ const AdminReports = () => {
     try {
       const payload: ReportResolutionRequest = { resolution };
       await api.patch(`/manage-api/reports/${report.report_id}/${action}`, payload);
-      setReports((current) => current.filter(
-        (item) => item.target_type !== report.target_type || item.target_id !== report.target_id
-      ));
+      if (reports.length === 1 && page > 1) {
+        setPage((current) => current - 1);
+      } else {
+        await loadReports();
+      }
       setMessage({
         type: 'success',
         text: action === 'resolve' ? '콘텐츠를 제재하고 신고를 처리했습니다.' : '신고를 기각했습니다.',
@@ -111,7 +115,7 @@ const AdminReports = () => {
       <div className="mb-5 flex flex-wrap gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <label className="text-sm font-semibold text-slate-700">
           처리 상태
-          <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="ml-2 min-h-11 rounded-md border border-slate-300 px-3 py-2">
+          <select value={status} onChange={(event) => { setStatus(event.target.value as StatusFilter); setPage(1); }} className="ml-2 min-h-11 rounded-md border border-slate-300 px-3 py-2">
             <option value="pending">미처리</option>
             <option value="resolved">제재 완료</option>
             <option value="dismissed">기각</option>
@@ -120,7 +124,7 @@ const AdminReports = () => {
         </label>
         <label className="text-sm font-semibold text-slate-700">
           대상
-          <select value={targetType} onChange={(event) => setTargetType(event.target.value as TargetFilter)} className="ml-2 min-h-11 rounded-md border border-slate-300 px-3 py-2">
+          <select value={targetType} onChange={(event) => { setTargetType(event.target.value as TargetFilter); setPage(1); }} className="ml-2 min-h-11 rounded-md border border-slate-300 px-3 py-2">
             <option value="all">전체</option>
             <option value="topic">토픽</option>
             <option value="comment">댓글</option>
@@ -134,13 +138,21 @@ const AdminReports = () => {
 
       {message && <p className={`mb-4 text-sm font-semibold ${message.type === 'success' ? 'text-emerald-700' : 'text-red-600'}`}>{message.text}</p>}
 
+      <div className="mb-4">
+        <AdminListSearch
+          value={search}
+          onSearch={(value) => { setSearch(value); setPage(1); }}
+          placeholder="신고 내용 또는 신고자 검색"
+        />
+      </div>
+
       {isLoading ? (
         <p className="rounded-lg border border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">신고 목록을 불러오는 중입니다.</p>
-      ) : groupedReports.length === 0 ? (
+      ) : reports.length === 0 ? (
         <p className="rounded-lg border border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">조건에 맞는 신고가 없습니다.</p>
       ) : (
         <ul className="space-y-4">
-          {groupedReports.map((report) => {
+          {reports.map((report) => {
             const snapshot = report.target_snapshot;
             const isPending = report.status === 'pending';
             const isProcessing = processingId === report.report_id;
@@ -182,6 +194,11 @@ const AdminReports = () => {
             );
           })}
         </ul>
+      )}
+      {!isLoading && (
+        <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <AdminListPagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+        </div>
       )}
     </section>
   );
