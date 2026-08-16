@@ -82,15 +82,30 @@ class CommentCrud:
         status: str | None = None,
         start_at: datetime | None = None,
         end_at: datetime | None = None,
-    ) -> list[Comment]:
-        query = select(Comment)
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[Comment], int]:
+        filters = []
         if start_at:
-            query = query.where(Comment.created_at >= start_at)
+            filters.append(Comment.created_at >= start_at)
         if end_at:
-            query = query.where(Comment.created_at < end_at)
-        query = query.order_by(desc(Comment.created_at), desc(Comment.comment_id))
+            filters.append(Comment.created_at < end_at)
+        if search:
+            filters.append(Comment.content.ilike(f"%{search.strip()}%"))
+
+        total_result = await db.execute(
+            select(func.count()).select_from(Comment).where(*filters)
+        )
+        query = (
+            select(Comment)
+            .where(*filters)
+            .order_by(desc(Comment.created_at), desc(Comment.comment_id))
+            .limit(limit)
+            .offset(offset)
+        )
         result = await db.execute(query)
-        return list(result.scalars().all())
+        return list(result.scalars().all()), total_result.scalar() or 0
 
     @staticmethod
     async def get_hidden_by_user_id(db: AsyncSession, user_id: int) -> list[tuple[Comment, str]]:

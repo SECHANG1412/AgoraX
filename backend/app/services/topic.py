@@ -13,6 +13,7 @@ from app.db.crud import (
     VoteCrud,
 )
 from app.db.schemas.admin import AdminDeleteResponse
+from app.db.schemas.pagination import PaginatedResponse
 from app.db.models import Topic
 from app.db.schemas.topics import (
     TopicAdminRead,
@@ -127,14 +128,20 @@ class TopicService:
         status: str | None = None,
         start_at=None,
         end_at=None,
-    ) -> list[TopicAdminRead]:
-        topics = await TopicCrud.get_all_for_admin(
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> PaginatedResponse[TopicAdminRead]:
+        topics, total = await TopicCrud.get_all_for_admin(
             db,
             status=status,
             start_at=start_at,
             end_at=end_at,
+            search=search,
+            limit=limit,
+            offset=offset,
         )
-        return [
+        items = [
             TopicAdminRead.model_validate(
                 {
                     **topic.__dict__,
@@ -143,6 +150,7 @@ class TopicService:
             )
             for topic in topics
         ]
+        return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
     @staticmethod
     async def delete_for_admin(

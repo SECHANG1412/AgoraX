@@ -7,9 +7,11 @@ from app.db.models import Inquiry
 from app.db.schemas.inquiries import (
     InquiryCreate,
     InquiryDeleteUpdate,
+    InquiryRead,
     InquiryStatusUpdate,
     MyInquiryRead,
 )
+from app.db.schemas.pagination import PaginatedResponse
 from app.services.admin_action_log import AdminActionLogService
 from app.services.notification import NotificationService
 
@@ -40,15 +42,23 @@ class InquiryService:
         status: str | None = None,
         start_at=None,
         end_at=None,
-    ) -> list[Inquiry]:
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> PaginatedResponse[InquiryRead]:
         if status == "deleted":
-            return []
-        return await InquiryCrud.get_all(
+            return PaginatedResponse(items=[], total=0, limit=limit, offset=offset)
+        inquiries, total = await InquiryCrud.get_all(
             db,
             status=status,
             start_at=start_at,
             end_at=end_at,
+            search=search,
+            limit=limit,
+            offset=offset,
         )
+        items = [InquiryRead.model_validate(inquiry) for inquiry in inquiries]
+        return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
     @staticmethod
     async def get_all_by_user(db: AsyncSession, user_id: int) -> list[MyInquiryRead]:

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Inquiry, User
@@ -32,19 +32,40 @@ class InquiryCrud:
         status: str | None = None,
         start_at: datetime | None = None,
         end_at: datetime | None = None,
-    ) -> list[Inquiry]:
-        query = select(Inquiry)
+        search: str | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[list[Inquiry], int]:
+        filters = []
         if status:
-            query = query.where(Inquiry.status == status)
+            filters.append(Inquiry.status == status)
         else:
-            query = query.where(Inquiry.status != "deleted")
+            filters.append(Inquiry.status != "deleted")
         if start_at:
-            query = query.where(Inquiry.created_at >= start_at)
+            filters.append(Inquiry.created_at >= start_at)
         if end_at:
-            query = query.where(Inquiry.created_at < end_at)
-        query = query.order_by(desc(Inquiry.created_at), desc(Inquiry.inquiry_id))
+            filters.append(Inquiry.created_at < end_at)
+        if search:
+            pattern = f"%{search.strip()}%"
+            filters.append(
+                or_(
+                    Inquiry.title.ilike(pattern),
+                    Inquiry.content.ilike(pattern),
+                    Inquiry.name.ilike(pattern),
+                    Inquiry.email.ilike(pattern),
+                )
+            )
+
+        total_result = await db.execute(
+            select(func.count()).select_from(Inquiry).where(*filters)
+        )
+        query = select(Inquiry).where(*filters).order_by(
+            desc(Inquiry.created_at), desc(Inquiry.inquiry_id)
+        )
+        if limit is not None:
+            query = query.limit(limit).offset(offset)
         result = await db.execute(query)
-        return list(result.scalars().all())
+        return list(result.scalars().all()), total_result.scalar() or 0
 
     @staticmethod
     async def get_all_by_user_id(db: AsyncSession, user_id: int) -> list[Inquiry]:

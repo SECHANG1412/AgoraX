@@ -3,8 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.crud import CommentCrud, LikeCrud, ReplyCrud, UserCrud
 from app.db.schemas.admin import AdminDeleteResponse
+from app.db.schemas.pagination import PaginatedResponse
 from app.db.models import Comment
 from app.db.schemas.comments import (
+    CommentAdminRead,
     CommentCreate,
     CommentModerationUpdate,
     CommentRead,
@@ -129,13 +131,21 @@ class CommentService:
         status: str | None = None,
         start_at=None,
         end_at=None,
-    ) -> list[Comment]:
-        return await CommentCrud.get_all_for_admin(
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> PaginatedResponse[CommentAdminRead]:
+        comments, total = await CommentCrud.get_all_for_admin(
             db,
             status=status,
             start_at=start_at,
             end_at=end_at,
+            search=search,
+            limit=limit,
+            offset=offset,
         )
+        items = [CommentAdminRead.model_validate(comment) for comment in comments]
+        return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
     @staticmethod
     async def delete_for_admin(

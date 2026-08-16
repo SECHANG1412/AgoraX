@@ -11,6 +11,7 @@ from app.db.schemas.comments import CommentAdminRead, CommentModerationUpdate
 from app.db.schemas.inquiries import InquiryDeleteUpdate, InquiryRead, InquiryStatusUpdate
 from app.db.schemas.reports import ReportAdminRead, ReportResolutionUpdate
 from app.db.schemas.notifications import ClosedTopicNotificationDispatchResponse
+from app.db.schemas.pagination import PaginatedResponse
 from app.db.schemas.topics import TopicAdminRead, TopicModerationUpdate
 from app.db.schemas.users import UserRead
 from app.services import (
@@ -31,13 +32,17 @@ async def get_admin_me(admin_user_id: int = Depends(require_admin_user_id)):
     return {"user_id": admin_user_id, "is_admin": True}
 
 
-@router.get("/users", response_model=list[UserRead])
+@router.get("/users", response_model=PaginatedResponse[UserRead])
 async def list_users_for_admin(
     _admin_user_id: int = Depends(require_admin_user_id),
     db: AsyncSession = Depends(get_db),
-    limit: int = Query(default=100, ge=1, le=200),
+    search: str | None = Query(default=None, max_length=100),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ):
-    return await UserService.get_all_for_admin(db, limit=limit)
+    return await UserService.get_all_for_admin(
+        db, search=search, limit=limit, offset=offset
+    )
 
 
 @router.get("/logs", response_model=list[AdminActionLogRead])
@@ -76,19 +81,25 @@ async def dispatch_closed_topic_notifications(
     )
 
 
-@router.get("/inquiries", response_model=list[InquiryRead])
+@router.get("/inquiries", response_model=PaginatedResponse[InquiryRead])
 async def list_inquiries(
     _admin_user_id: int = Depends(require_admin_user_id),
     db: AsyncSession = Depends(get_db),
     status: str | None = None,
     start_at: datetime | None = None,
     end_at: datetime | None = None,
+    search: str | None = Query(default=None, max_length=100),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ):
     return await InquiryService.get_all_for_admin(
         db,
         status=status,
         start_at=start_at,
         end_at=end_at,
+        search=search,
+        limit=limit,
+        offset=offset,
     )
 
 
@@ -123,19 +134,25 @@ async def delete_inquiry(
     return await InquiryService.delete_for_admin(db, inquiry_id, update, admin_user_id)
 
 
-@router.get("/topics", response_model=list[TopicAdminRead])
+@router.get("/topics", response_model=PaginatedResponse[TopicAdminRead])
 async def list_topics_for_admin(
     _admin_user_id: int = Depends(require_admin_user_id),
     db: AsyncSession = Depends(get_db),
     status: str | None = None,
     start_at: datetime | None = None,
     end_at: datetime | None = None,
+    search: str | None = Query(default=None, max_length=100),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ):
     return await TopicService.get_all_for_admin(
         db,
         status=status,
         start_at=start_at,
         end_at=end_at,
+        search=search,
+        limit=limit,
+        offset=offset,
     )
 
 
@@ -149,19 +166,25 @@ async def delete_topic_for_admin(
     return await TopicService.delete_for_admin(db, topic_id, update, admin_user_id)
 
 
-@router.get("/comments", response_model=list[CommentAdminRead])
+@router.get("/comments", response_model=PaginatedResponse[CommentAdminRead])
 async def list_comments_for_admin(
     _admin_user_id: int = Depends(require_admin_user_id),
     db: AsyncSession = Depends(get_db),
     status: str | None = None,
     start_at: datetime | None = None,
     end_at: datetime | None = None,
+    search: str | None = Query(default=None, max_length=100),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ):
     return await CommentService.get_all_for_admin(
         db,
         status=status,
         start_at=start_at,
         end_at=end_at,
+        search=search,
+        limit=limit,
+        offset=offset,
     )
 
 
@@ -173,7 +196,7 @@ async def delete_comment_for_admin(
     db: AsyncSession = Depends(get_db),
 ):
     return await CommentService.delete_for_admin(db, comment_id, update, admin_user_id)
-@router.get("/reports", response_model=list[ReportAdminRead])
+@router.get("/reports", response_model=PaginatedResponse[ReportAdminRead])
 async def list_reports_for_admin(
     _admin_user_id: int = Depends(require_admin_user_id),
     db: AsyncSession = Depends(get_db),
@@ -181,6 +204,9 @@ async def list_reports_for_admin(
     target_type: str | None = None,
     start_at: datetime | None = None,
     end_at: datetime | None = None,
+    search: str | None = Query(default=None, max_length=100),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ):
     return await ReportService.get_all_for_admin(
         db,
@@ -188,6 +214,9 @@ async def list_reports_for_admin(
         target_type=target_type,
         start_at=start_at,
         end_at=end_at,
+        search=search,
+        limit=limit,
+        offset=offset,
     )
 
 

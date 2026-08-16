@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, or_, select
 from app.db.models import User
 from app.db.models.user import normalize_username
 from app.db.schemas.users import UserCreate, UserUpdate
@@ -20,11 +20,29 @@ class UserCrud:
         return {user.user_id: user for user in result.scalars().all()}
 
     @staticmethod
-    async def get_all_for_admin(db: AsyncSession, limit: int = 100) -> list[User]:
-        result = await db.execute(
-            select(User).order_by(desc(User.created_at), desc(User.user_id)).limit(limit)
+    async def get_all_for_admin(
+        db: AsyncSession,
+        *,
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[User], int]:
+        filters = []
+        if search:
+            pattern = f"%{search.strip()}%"
+            filters.append(or_(User.username.ilike(pattern), User.email.ilike(pattern)))
+
+        total_result = await db.execute(
+            select(func.count()).select_from(User).where(*filters)
         )
-        return list(result.scalars().all())
+        result = await db.execute(
+            select(User)
+            .where(*filters)
+            .order_by(desc(User.created_at), desc(User.user_id))
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(result.scalars().all()), total_result.scalar() or 0
     
     @staticmethod
     async def create(db: AsyncSession, user: UserCreate) -> User:

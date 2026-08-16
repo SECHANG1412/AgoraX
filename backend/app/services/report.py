@@ -9,6 +9,7 @@ from app.db.crud.report import ReportCrud
 from app.db.schemas.reports import ReportCreate, ReportRead
 from app.db.schemas.comments import CommentModerationUpdate
 from app.db.schemas.reports import ReportAdminRead, ReportResolutionUpdate
+from app.db.schemas.pagination import PaginatedResponse
 from app.db.schemas.topics import TopicModerationUpdate
 from app.services.admin_action_log import AdminActionLogService
 from app.services.comment import CommentService
@@ -105,13 +106,19 @@ class ReportService:
         target_type: str | None = None,
         start_at=None,
         end_at=None,
-    ) -> list[ReportAdminRead]:
-        reports = await ReportCrud.get_all_for_admin(
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> PaginatedResponse[ReportAdminRead]:
+        reports, total = await ReportCrud.get_all_for_admin(
             db,
             status=status,
             target_type=target_type,
             start_at=start_at,
             end_at=end_at,
+            search=search,
+            limit=limit,
+            offset=offset,
         )
         users = await UserCrud.get_by_ids(
             db, list({report.reporter_user_id for report in reports})
@@ -119,7 +126,7 @@ class ReportService:
         counts = await ReportCrud.count_by_targets(
             db, list({(report.target_type, report.target_id) for report in reports})
         )
-        return [
+        items = [
             ReportAdminRead.model_validate(
                 {
                     **report.__dict__,
@@ -129,6 +136,7 @@ class ReportService:
             )
             for report in reports
         ]
+        return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
     @staticmethod
     async def resolve_for_admin(
@@ -204,7 +212,7 @@ class ReportService:
         admin_user_id: int,
     ) -> ReportAdminRead:
         report = await ReportService._get_pending_for_update(db, report_id)
-        reports = await ReportCrud.get_all_for_admin(db, status="pending")
+        reports, _ = await ReportCrud.get_all_for_admin(db, status="pending")
         matching = [
             item for item in reports
             if item.target_type == report.target_type and item.target_id == report.target_id
@@ -252,7 +260,7 @@ class ReportService:
 
     @staticmethod
     async def _get_related_pending_reports(db: AsyncSession, report):
-        pending = await ReportCrud.get_all_for_admin(db, status="pending")
+        pending, _ = await ReportCrud.get_all_for_admin(db, status="pending")
         if report.target_type == "topic":
             topic_id = report.target_id
             return [item for item in pending if item.target_snapshot.get("topic_id") == topic_id]

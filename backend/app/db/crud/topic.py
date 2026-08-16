@@ -181,22 +181,37 @@ class TopicCrud:
         status: str | None = None,
         start_at: datetime | None = None,
         end_at: datetime | None = None,
-    ) -> list[Topic]:
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[Topic], int]:
         now = datetime.now(timezone.utc)
-        query = select(Topic)
+        filters = []
         if status == "active":
-            query = query.where(TopicCrud._active_topic_filter(now))
+            filters.append(TopicCrud._active_topic_filter(now))
         elif status == "closed":
-            query = query.where(TopicCrud._closed_topic_filter(now))
+            filters.append(TopicCrud._closed_topic_filter(now))
         if start_at:
-            query = query.where(Topic.created_at >= start_at)
+            filters.append(Topic.created_at >= start_at)
         if end_at:
-            query = query.where(Topic.created_at < end_at)
+            filters.append(Topic.created_at < end_at)
+        if search:
+            pattern = f"%{search.strip()}%"
+            filters.append(or_(Topic.title.ilike(pattern), Topic.description.ilike(pattern)))
+
+        total_result = await db.execute(
+            select(func.count()).select_from(Topic).where(*filters)
+        )
+        query = select(Topic).where(*filters)
         if status == "all":
             query = query.order_by(desc(TopicCrud._active_rank_expression(now)))
-        query = query.order_by(desc(Topic.created_at), desc(Topic.topic_id))
+        query = (
+            query.order_by(desc(Topic.created_at), desc(Topic.topic_id))
+            .limit(limit)
+            .offset(offset)
+        )
         result = await db.execute(query)
-        return list(result.scalars().all())
+        return list(result.scalars().all()), total_result.scalar() or 0
 
     @staticmethod
     async def get_closed_without_notifications(
