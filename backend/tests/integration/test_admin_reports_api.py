@@ -60,11 +60,9 @@ async def test_admin_report_list_includes_snapshot_and_aggregate_count(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["total"] == 2
-    assert {item["reporter_name"] for item in payload["items"]} == {
-        "reporter-one",
-        "reporter-two",
-    }
+    assert payload["total"] == 1
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["reporter_name"] == "reporter-two"
     assert all(item["report_count"] == 2 for item in payload["items"])
     assert all(
         item["target_snapshot"]["title"] == "reported" for item in payload["items"]

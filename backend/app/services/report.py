@@ -119,6 +119,7 @@ class ReportService:
             search=search,
             limit=limit,
             offset=offset,
+            group_targets=True,
         )
         users = await UserCrud.get_by_ids(
             db, list({report.reporter_user_id for report in reports})

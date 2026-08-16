@@ -52,6 +52,7 @@ class ReportCrud:
         search: str | None = None,
         limit: int | None = None,
         offset: int = 0,
+        group_targets: bool = False,
     ) -> tuple[list[Report], int]:
         filters = []
         if status:
@@ -72,18 +73,35 @@ class ReportCrud:
                 )
             )
 
-        total_result = await db.execute(
-            select(func.count())
-            .select_from(Report)
-            .join(User, User.user_id == Report.reporter_user_id)
-            .where(*filters)
-        )
-        query = (
-            select(Report)
-            .join(User, User.user_id == Report.reporter_user_id)
-            .where(*filters)
-            .order_by(desc(Report.created_at), desc(Report.report_id))
-        )
+        if group_targets:
+            grouped_ids = (
+                select(func.max(Report.report_id).label("report_id"))
+                .join(User, User.user_id == Report.reporter_user_id)
+                .where(*filters)
+                .group_by(Report.target_type, Report.target_id)
+                .subquery()
+            )
+            total_result = await db.execute(
+                select(func.count()).select_from(grouped_ids)
+            )
+            query = (
+                select(Report)
+                .where(Report.report_id.in_(select(grouped_ids.c.report_id)))
+                .order_by(desc(Report.created_at), desc(Report.report_id))
+            )
+        else:
+            total_result = await db.execute(
+                select(func.count())
+                .select_from(Report)
+                .join(User, User.user_id == Report.reporter_user_id)
+                .where(*filters)
+            )
+            query = (
+                select(Report)
+                .join(User, User.user_id == Report.reporter_user_id)
+                .where(*filters)
+                .order_by(desc(Report.created_at), desc(Report.report_id))
+            )
         if limit is not None:
             query = query.limit(limit).offset(offset)
         result = await db.execute(query)

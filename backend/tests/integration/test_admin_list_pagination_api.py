@@ -138,3 +138,59 @@ async def test_admin_report_list_searches_reporter_name(
     assert response.status_code == 200
     assert response.json()["total"] == 1
     assert response.json()["items"][0]["reporter_name"] == "searchable-reporter"
+
+
+@pytest.mark.asyncio
+async def test_admin_report_list_paginates_by_unique_target(
+    client: AsyncClient, db_session, set_auth_cookies
+):
+    owner = await create_user(db_session)
+    reporters = [
+        await create_user(db_session, username="reporter-one"),
+        await create_user(db_session, username="reporter-two"),
+    ]
+    topics = [
+        await create_topic(db_session, user_id=owner.user_id, title="first target"),
+        await create_topic(db_session, user_id=owner.user_id, title="second target"),
+    ]
+    admin = await create_user(db_session, is_admin=True)
+    await db_session.commit()
+
+    for reporter in reporters:
+        set_auth_cookies(client, reporter.user_id)
+        response = await client.post(
+            "/reports",
+            json={
+                "target_type": "topic",
+                "target_id": topics[0].topic_id,
+                "reason": "spam",
+            },
+        )
+        assert response.status_code == 201
+
+    set_auth_cookies(client, reporters[0].user_id)
+    response = await client.post(
+        "/reports",
+        json={
+            "target_type": "topic",
+            "target_id": topics[1].topic_id,
+            "reason": "spam",
+        },
+    )
+    assert response.status_code == 201
+    set_auth_cookies(client, admin.user_id)
+
+    first_page = await client.get(
+        "/manage-api/reports", params={"limit": 1, "offset": 0}
+    )
+    second_page = await client.get(
+        "/manage-api/reports", params={"limit": 1, "offset": 1}
+    )
+
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+    assert first_page.json()["total"] == 2
+    assert second_page.json()["total"] == 2
+    first_target = first_page.json()["items"][0]["target_id"]
+    second_target = second_page.json()["items"][0]["target_id"]
+    assert first_target != second_target

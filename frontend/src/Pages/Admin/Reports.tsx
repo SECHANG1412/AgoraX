@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { formatKoreanDateTime } from '../../utils/date';
@@ -72,15 +72,6 @@ const AdminReports = () => {
     loadReports();
   }, [loadReports]);
 
-  const groupedReports = useMemo(() => {
-    const unique = new Map<string, ReportAdminRead>();
-    reports.forEach((report) => {
-      const key = `${report.target_type}:${report.target_id}`;
-      if (!unique.has(key)) unique.set(key, report);
-    });
-    return [...unique.values()];
-  }, [reports]);
-
   const processReport = async (report: ReportAdminRead, action: 'resolve' | 'dismiss') => {
     const resolution = (resolutionById[report.report_id] || '').trim();
     if (!resolution) {
@@ -97,7 +88,7 @@ const AdminReports = () => {
     try {
       const payload: ReportResolutionRequest = { resolution };
       await api.patch(`/manage-api/reports/${report.report_id}/${action}`, payload);
-      if (groupedReports.length === 1 && page > 1) {
+      if (reports.length === 1 && page > 1) {
         setPage((current) => current - 1);
       } else {
         await loadReports();
@@ -157,11 +148,11 @@ const AdminReports = () => {
 
       {isLoading ? (
         <p className="rounded-lg border border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">신고 목록을 불러오는 중입니다.</p>
-      ) : groupedReports.length === 0 ? (
+      ) : reports.length === 0 ? (
         <p className="rounded-lg border border-slate-200 bg-white px-4 py-8 text-sm text-slate-500">조건에 맞는 신고가 없습니다.</p>
       ) : (
         <ul className="space-y-4">
-          {groupedReports.map((report) => {
+          {reports.map((report) => {
             const snapshot = report.target_snapshot;
             const isPending = report.status === 'pending';
             const isProcessing = processingId === report.report_id;
