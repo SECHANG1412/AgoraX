@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { UserRead } from '../../types';
+import type { PaginatedResponse, UserRead } from '../../types';
 import api from '../../utils/api';
 import { formatKoreanDateTime } from '../../utils/date';
+import AdminListPagination from '../../Components/Admin/AdminListPagination';
+import AdminListSearch from '../../Components/Admin/AdminListSearch';
+
+const PAGE_SIZE = 20;
 
 type Message = { type: 'error'; text: string };
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<UserRead[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [message, setMessage] = useState<Message | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -15,14 +22,21 @@ const AdminUsers = () => {
     setIsLoading(true);
     setMessage(null);
     try {
-      const response = await api.get<UserRead[]>('/manage-api/users');
-      setUsers(response.data);
+      const response = await api.get<PaginatedResponse<UserRead>>('/manage-api/users', {
+        params: {
+          ...(search && { search }),
+          limit: PAGE_SIZE,
+          offset: (page - 1) * PAGE_SIZE,
+        },
+      });
+      setUsers(response.data.items);
+      setTotal(response.data.total);
     } catch {
       setMessage({ type: 'error', text: '회원 목록을 불러오지 못했습니다.' });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [page, search]);
 
   useEffect(() => {
     loadUsers();
@@ -54,6 +68,17 @@ const AdminUsers = () => {
       </div>
 
       {message && <p className="mb-4 text-sm font-semibold text-red-600">{message.text}</p>}
+
+      <div className="mb-4">
+        <AdminListSearch
+          value={search}
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder="닉네임 또는 이메일 검색"
+        />
+      </div>
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         {isLoading ? (
@@ -113,6 +138,14 @@ const AdminUsers = () => {
               </tbody>
             </table>
           </div>
+        )}
+        {!isLoading && (
+          <AdminListPagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
+          />
         )}
       </section>
     </section>

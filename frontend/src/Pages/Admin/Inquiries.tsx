@@ -9,8 +9,13 @@ import type {
   InquiryRead,
   InquiryStatus,
   InquiryStatusUpdateRequest,
+  PaginatedResponse,
 } from '../../types';
 import { formatKoreanDateTime } from '../../utils/date';
+import AdminListPagination from '../../Components/Admin/AdminListPagination';
+import AdminListSearch from '../../Components/Admin/AdminListSearch';
+
+const PAGE_SIZE = 20;
 
 const STATUS_OPTIONS = [
   { value: '', label: '전체' },
@@ -77,6 +82,9 @@ const StatusBadge = ({ status }: StatusBadgeProps) => (
 
 const AdminInquiries = () => {
   const [inquiries, setInquiries] = useState<InquiryRead[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedInquiry, setSelectedInquiry] = useState<InquiryRead | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('');
@@ -91,20 +99,24 @@ const AdminInquiries = () => {
   const params = useMemo(() => {
     const nextParams = { ...getDateParams(dateFilter) };
     if (statusFilter) nextParams.status = statusFilter;
+    if (search) nextParams.search = search;
+    nextParams.limit = PAGE_SIZE;
+    nextParams.offset = (page - 1) * PAGE_SIZE;
     return nextParams;
-  }, [dateFilter, statusFilter]);
+  }, [dateFilter, page, search, statusFilter]);
 
   const loadInquiries = useCallback(async () => {
     setIsListLoading(true);
     setMessage(null);
     try {
-      const response = await api.get<InquiryRead[]>('/manage-api/inquiries', { params });
-      setInquiries(response.data);
+      const response = await api.get<PaginatedResponse<InquiryRead>>('/manage-api/inquiries', { params });
+      setInquiries(response.data.items);
+      setTotal(response.data.total);
       setSelectedId((current) => {
-        if (current && response.data.some((inquiry) => inquiry.inquiry_id === current)) {
+        if (current && response.data.items.some((inquiry) => inquiry.inquiry_id === current)) {
           return current;
         }
-        return response.data[0]?.inquiry_id ?? null;
+        return response.data.items[0]?.inquiry_id ?? null;
       });
     } catch {
       setMessage({ type: 'error', text: '문의 목록을 불러오지 못했습니다.' });
@@ -140,14 +152,6 @@ const AdminInquiries = () => {
   useEffect(() => {
     loadInquiryDetail(selectedId);
   }, [loadInquiryDetail, selectedId]);
-
-  const removeInquiry = (inquiryId: number) => {
-    setInquiries((prev) => prev.filter((inquiry) => inquiry.inquiry_id !== inquiryId));
-    if (selectedId === inquiryId) {
-      setSelectedId(null);
-      setSelectedInquiry(null);
-    }
-  };
 
   const replaceInquiry = (updated: InquiryRead) => {
     setSelectedInquiry(updated);
@@ -203,7 +207,11 @@ const AdminInquiries = () => {
         `/manage-api/inquiries/${selectedInquiry.inquiry_id}/delete`,
         payload
       );
-      removeInquiry(selectedInquiry.inquiry_id);
+      if (inquiries.length === 1 && page > 1) {
+        setPage((current) => current - 1);
+      } else {
+        await loadInquiries();
+      }
       setReason('');
       setMessage({ type: 'success', text: '문의를 영구 삭제했습니다. 삭제 내역은 감사 로그에 기록됩니다.' });
     } catch {
@@ -233,7 +241,10 @@ const AdminInquiries = () => {
             상태
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+              onChange={(event) => {
+                setStatusFilter(event.target.value as StatusFilter);
+                setPage(1);
+              }}
               className="mt-2 block min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
             >
               {STATUS_OPTIONS.map((option) => (
@@ -248,7 +259,10 @@ const AdminInquiries = () => {
             기간
             <select
               value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value as DateFilter)}
+              onChange={(event) => {
+                setDateFilter(event.target.value as DateFilter);
+                setPage(1);
+              }}
               className="mt-2 block min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
             >
               {DATE_OPTIONS.map((option) => (
@@ -262,6 +276,17 @@ const AdminInquiries = () => {
       </div>
 
       {message && <p className={`mb-4 text-sm font-semibold ${messageColor}`}>{message.text}</p>}
+
+      <div className="mb-4">
+        <AdminListSearch
+          value={search}
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder="제목, 내용, 작성자 또는 이메일 검색"
+        />
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)]">
         <section className="rounded-lg border border-slate-200 bg-white">
@@ -303,6 +328,14 @@ const AdminInquiries = () => {
                 );
               })}
             </ul>
+          )}
+          {!isListLoading && (
+            <AdminListPagination
+              page={page}
+              pageSize={PAGE_SIZE}
+              total={total}
+              onPageChange={setPage}
+            />
           )}
         </section>
 
