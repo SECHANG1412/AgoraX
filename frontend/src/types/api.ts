@@ -306,11 +306,24 @@ export type AdminDateRangeParams = {
   end_at?: ISODateTimeString;
 };
 
-export type AdminInquiryListParams = AdminDateRangeParams & {
+export type PaginatedResponse<T> = {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type AdminPaginatedListParams = {
+  search?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type AdminInquiryListParams = AdminDateRangeParams & AdminPaginatedListParams & {
   status?: InquiryStatus;
 };
 
-export type AdminContentListParams = AdminDateRangeParams;
+export type AdminContentListParams = AdminDateRangeParams & AdminPaginatedListParams;
 
 export type AdminActionLogListParams = AdminDateRangeParams & {
   limit?: number;
