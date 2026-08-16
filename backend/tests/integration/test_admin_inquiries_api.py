@@ -46,8 +46,8 @@ async def test_admin_can_list_inquiries(client: AsyncClient, db_session, set_aut
 
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload) == 2
-    assert {item["title"] for item in payload} == {"first", "second"}
+    assert payload["total"] == 2
+    assert {item["title"] for item in payload["items"]} == {"first", "second"}
 
 
 @pytest.mark.asyncio
@@ -63,7 +63,7 @@ async def test_admin_inquiry_list_excludes_legacy_deleted_status(
     response = await client.get("/manage-api/inquiries")
 
     assert response.status_code == 200
-    assert [item["title"] for item in response.json()] == ["visible"]
+    assert [item["title"] for item in response.json()["items"]] == ["visible"]
 
 
 @pytest.mark.asyncio
@@ -78,7 +78,8 @@ async def test_admin_deleted_status_filter_returns_empty_list(
     response = await client.get("/manage-api/inquiries", params={"status": "deleted"})
 
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["items"] == []
+    assert response.json()["total"] == 0
 
 
 @pytest.mark.asyncio
@@ -241,7 +242,7 @@ async def test_admin_can_filter_inquiries_by_status(
     response = await client.get("/manage-api/inquiries", params={"status": "resolved"})
 
     assert response.status_code == 200
-    assert [item["title"] for item in response.json()] == ["resolved"]
+    assert [item["title"] for item in response.json()["items"]] == ["resolved"]
 
 
 @pytest.mark.asyncio

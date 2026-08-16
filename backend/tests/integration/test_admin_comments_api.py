@@ -61,7 +61,9 @@ async def test_admin_comment_list_includes_legacy_hidden_comments(
     response = await client.get("/manage-api/comments")
 
     assert response.status_code == 200
-    assert [item["content"] for item in response.json()] == [
+    payload = response.json()
+    assert payload["total"] == 2
+    assert [item["content"] for item in payload["items"]] == [
         "hidden-comment",
         "public-comment",
     ]

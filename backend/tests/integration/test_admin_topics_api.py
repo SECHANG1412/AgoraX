@@ -54,7 +54,9 @@ async def test_admin_topic_list_includes_legacy_hidden_topics(
     response = await client.get("/manage-api/topics")
 
     assert response.status_code == 200
-    assert [item["title"] for item in response.json()] == ["hidden-topic", "public-topic"]
+    payload = response.json()
+    assert payload["total"] == 2
+    assert [item["title"] for item in payload["items"]] == ["hidden-topic", "public-topic"]
 
 
 @pytest.mark.asyncio
