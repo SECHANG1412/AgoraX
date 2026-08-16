@@ -8,7 +8,7 @@ type ConfirmProviderProps = {
 
 type ConfirmProviderOptions = Required<ConfirmOptions>;
 
-const defaultOptions: ConfirmProviderOptions = {
+const DEFAULT_OPTIONS: ConfirmProviderOptions = {
   title: '',
   description: '',
   confirmText: '확인',
@@ -30,7 +30,7 @@ const variantStyles: Record<ConfirmVariant, { icon: string; confirm: string }> =
 
 const ConfirmProvider = ({ children }: ConfirmProviderProps) => {
   const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState(defaultOptions);
+  const [options, setOptions] = useState(DEFAULT_OPTIONS);
   const resolverRef = useRef<((value: boolean) => void) | null>(null);
 
   const resolve = useCallback((value: boolean) => {
@@ -40,7 +40,7 @@ const ConfirmProvider = ({ children }: ConfirmProviderProps) => {
   }, []);
 
   const confirm = useCallback((nextOptions: ConfirmOptions) => {
-    setOptions({ ...defaultOptions, ...nextOptions });
+    setOptions({ ...DEFAULT_OPTIONS, ...nextOptions });
     setOpen(true);
 
     return new Promise<boolean>((resolver) => {
