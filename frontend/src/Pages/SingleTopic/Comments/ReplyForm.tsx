@@ -40,6 +40,7 @@ const ReplyForm = ({ onSubmit, onCancel, lockedPrefix = '' }: ReplyFormProps) =>
         <div className="flex items-center justify-end gap-2">
           <button
             type="submit"
+            aria-label="답글 등록"
             disabled={!body.trim()}
             className={`flex h-11 w-11 items-center justify-center rounded-lg ${
               body.trim()
@@ -51,6 +52,7 @@ const ReplyForm = ({ onSubmit, onCancel, lockedPrefix = '' }: ReplyFormProps) =>
           </button>
           <button
             type="button"
+            aria-label="답글 작성 취소"
             onClick={onCancel}
             className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200"
           >
