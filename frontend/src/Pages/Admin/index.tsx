@@ -2,7 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
-import type { AdminActionLogRead, CommentAdminRead, InquiryRead, InquiryStatus, ReportAdminRead, TopicAdminRead } from '../../types';
+import type {
+  AdminActionLogRead,
+  CommentAdminRead,
+  InquiryRead,
+  InquiryStatus,
+  PaginatedResponse,
+  ReportAdminRead,
+  TopicAdminRead,
+} from '../../types';
 import { formatKoreanDateTime, parseApiDate } from '../../utils/date';
 
 type KnownAdminAction = 'UPDATE_INQUIRY_STATUS' | 'DELETE_INQUIRY' | 'DELETE_TOPIC' | 'DELETE_COMMENT';
@@ -60,9 +68,11 @@ const QuickLink = ({ to, children }: QuickLinkProps) => (
 
 const Admin = () => {
   const [inquiries, setInquiries] = useState<InquiryRead[]>([]);
-  const [topics, setTopics] = useState<TopicAdminRead[]>([]);
-  const [comments, setComments] = useState<CommentAdminRead[]>([]);
-  const [reports, setReports] = useState<ReportAdminRead[]>([]);
+  const [pendingInquiryCount, setPendingInquiryCount] = useState(0);
+  const [resolvedInquiryCount, setResolvedInquiryCount] = useState(0);
+  const [topicCount, setTopicCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [pendingReportCount, setPendingReportCount] = useState(0);
   const [logs, setLogs] = useState<AdminActionLogRead[]>([]);
   const [message, setMessage] = useState<Message | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,34 +81,61 @@ const Admin = () => {
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
     setMessage(null);
-    const [inquiriesResult, topicsResult, commentsResult, reportsResult, logsResult] =
+    const [
+      inquiriesResult,
+      pendingInquiriesResult,
+      resolvedInquiriesResult,
+      topicsResult,
+      commentsResult,
+      reportsResult,
+      logsResult,
+    ] =
       await Promise.allSettled([
-        api.get<InquiryRead[]>('/manage-api/inquiries'),
-        api.get<TopicAdminRead[]>('/manage-api/topics'),
-        api.get<CommentAdminRead[]>('/manage-api/comments'),
-        api.get<ReportAdminRead[]>('/manage-api/reports', { params: { status: 'pending' } }),
+        api.get<PaginatedResponse<InquiryRead>>('/manage-api/inquiries', { params: { limit: 5 } }),
+        api.get<PaginatedResponse<InquiryRead>>('/manage-api/inquiries', {
+          params: { status: 'pending', limit: 1 },
+        }),
+        api.get<PaginatedResponse<InquiryRead>>('/manage-api/inquiries', {
+          params: { status: 'resolved', limit: 1 },
+        }),
+        api.get<PaginatedResponse<TopicAdminRead>>('/manage-api/topics', { params: { limit: 1 } }),
+        api.get<PaginatedResponse<CommentAdminRead>>('/manage-api/comments', { params: { limit: 1 } }),
+        api.get<PaginatedResponse<ReportAdminRead>>('/manage-api/reports', {
+          params: { status: 'pending', limit: 1 },
+        }),
         api.get<AdminActionLogRead[]>('/manage-api/logs', { params: { limit: 5 } }),
       ]);
 
     const nextFailedResources = new Set<DashboardResource>();
 
     if (inquiriesResult.status === 'fulfilled') {
-      setInquiries(inquiriesResult.value.data);
-    } else {
+      setInquiries(inquiriesResult.value.data.items);
+    }
+    if (pendingInquiriesResult.status === 'fulfilled') {
+      setPendingInquiryCount(pendingInquiriesResult.value.data.total);
+    }
+    if (resolvedInquiriesResult.status === 'fulfilled') {
+      setResolvedInquiryCount(resolvedInquiriesResult.value.data.total);
+    }
+    if (
+      inquiriesResult.status === 'rejected' ||
+      pendingInquiriesResult.status === 'rejected' ||
+      resolvedInquiriesResult.status === 'rejected'
+    ) {
       nextFailedResources.add('inquiries');
     }
     if (topicsResult.status === 'fulfilled') {
-      setTopics(topicsResult.value.data);
+      setTopicCount(topicsResult.value.data.total);
     } else {
       nextFailedResources.add('topics');
     }
     if (commentsResult.status === 'fulfilled') {
-      setComments(commentsResult.value.data);
+      setCommentCount(commentsResult.value.data.total);
     } else {
       nextFailedResources.add('comments');
     }
     if (reportsResult.status === 'fulfilled') {
-      setReports(reportsResult.value.data);
+      setPendingReportCount(reportsResult.value.data.total);
     } else {
       nextFailedResources.add('reports');
     }
@@ -123,13 +160,13 @@ const Admin = () => {
 
   const stats = useMemo(() => {
     return {
-      pendingInquiries: inquiries.filter((inquiry) => inquiry.status === 'pending').length,
-      resolvedInquiries: inquiries.filter((inquiry) => inquiry.status === 'resolved').length,
-      topics: topics.length,
-      comments: comments.length,
-      pendingReports: reports.length,
+      pendingInquiries: pendingInquiryCount,
+      resolvedInquiries: resolvedInquiryCount,
+      topics: topicCount,
+      comments: commentCount,
+      pendingReports: pendingReportCount,
     };
-  }, [comments, inquiries, reports, topics]);
+  }, [commentCount, pendingInquiryCount, pendingReportCount, resolvedInquiryCount, topicCount]);
 
   const recentInquiries = useMemo(() => {
     return [...inquiries]
