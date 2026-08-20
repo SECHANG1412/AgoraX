@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CATEGORIES } from '../../constants/categories';
@@ -37,6 +37,8 @@ const CreateTopic = () => {
   });
   const [expirationPreset, setExpirationPreset] = useState<ExpirationPreset>('7d');
   const [expirationTime, setExpirationTime] = useState(DEFAULT_EXPIRATION_TIME);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -69,6 +71,8 @@ const CreateTopic = () => {
   const onSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      if (isSubmittingRef.current) return;
+
       const title = formData.title.trim();
       const validVoteOptions = formData.vote_options.map((opt) => opt.trim());
 
@@ -96,6 +100,9 @@ const CreateTopic = () => {
         return;
       }
 
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+
       try {
         const result = await addTopic({
           ...formData,
@@ -107,6 +114,9 @@ const CreateTopic = () => {
         navigate(`/topic/${result.topic_id}`);
       } catch (error) {
         showErrorAlert(error, CREATE_TOPIC_MESSAGES.retry);
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
       }
     },
     [formData, addTopic, navigate]
@@ -153,7 +163,7 @@ const CreateTopic = () => {
             onCustomDateChange={onCustomExpirationDateChange}
             onTimeChange={onExpirationTimeChange}
           />
-          <SubmitButton label="토픽 만들기" />
+          <SubmitButton label="토픽 만들기" isSubmitting={isSubmitting} />
         </form>
       </div>
     </div>
