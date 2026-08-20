@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../hooks/auth-context';
@@ -12,8 +12,16 @@ vi.mock('../../hooks/auth-context', () => ({ useAuth: vi.fn() }));
 vi.mock('../../hooks/confirm-context', () => ({ useConfirm: vi.fn() }));
 vi.mock('../../hooks/useTopic', () => ({ useTopic: vi.fn() }));
 vi.mock('../../hooks/useVote', () => ({ useVote: vi.fn() }));
-vi.mock('./layout/Grid', () => ({ default: () => <div>토픽 목록</div> }));
-vi.mock('./layout/TopicListControls', () => ({ default: () => <div>목록 조건</div> }));
+vi.mock('./layout/Grid', () => ({
+  default: ({ topics }: { topics: Array<{ topic_id: number; title: string }> }) => (
+    <div>{topics.map((topic) => <span key={topic.topic_id}>{topic.title}</span>)}</div>
+  ),
+}));
+vi.mock('./layout/TopicListControls', () => ({
+  default: ({ onStatusChange }: { onStatusChange: (status: 'closed') => void }) => (
+    <button type="button" onClick={() => onStatusChange('closed')}>마감 토픽 보기</button>
+  ),
+}));
 
 const fetchTopics = vi.fn();
 const countAllTopics = vi.fn();
@@ -22,6 +30,14 @@ const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseConfirm = vi.mocked(useConfirm);
 const mockedUseTopic = vi.mocked(useTopic);
 const mockedUseVote = vi.mocked(useVote);
+
+const createDeferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+  return { promise, resolve };
+};
 
 const LocationProbe = () => {
   const location = useLocation();
@@ -77,6 +93,39 @@ beforeEach(() => {
 });
 
 describe('메인 토픽 목록 페이지 경계', () => {
+  it('이전 요청이 늦게 완료되어도 최신 목록을 유지한다', async () => {
+    const firstCount = createDeferred<number>();
+    const firstTopics = createDeferred<Array<{ topic_id: number; title: string }>>();
+    const secondCount = createDeferred<number>();
+    const secondTopics = createDeferred<Array<{ topic_id: number; title: string }>>();
+
+    countAllTopics
+      .mockImplementationOnce(() => firstCount.promise)
+      .mockImplementationOnce(() => secondCount.promise);
+    fetchTopics
+      .mockImplementationOnce(() => firstTopics.promise)
+      .mockImplementationOnce(() => secondTopics.promise);
+
+    renderMain('/');
+    await waitFor(() => expect(fetchTopics).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: '마감 토픽 보기' }));
+    await waitFor(() => expect(fetchTopics).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      secondCount.resolve(1);
+      secondTopics.resolve([{ topic_id: 2, title: '최신 토픽' }]);
+    });
+    expect(await screen.findByText('최신 토픽')).toBeInTheDocument();
+
+    await act(async () => {
+      firstCount.resolve(1);
+      firstTopics.resolve([{ topic_id: 1, title: '이전 토픽' }]);
+    });
+    expect(screen.getByText('최신 토픽')).toBeInTheDocument();
+    expect(screen.queryByText('이전 토픽')).not.toBeInTheDocument();
+  });
+
   it('정상적인 2페이지는 해당 offset으로 조회한다', async () => {
     renderMain('/?page=2');
 
