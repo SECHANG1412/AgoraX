@@ -28,6 +28,13 @@ export type MainTopic = TopicRead & { originalIndex?: number };
 export type MainVoteHandler = (topicId: number, voteIndex: number) => Promise<void>;
 export type MainPinToggleHandler = (topicId: number, isPinned: boolean) => Promise<void>;
 
+const parsePageParam = (value: string | null) => {
+  if (!value || !/^[1-9]\d*$/.test(value)) return null;
+
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+};
+
 const Main = () => {
   const { loading, fetchTopics, countAllTopics, pinTopic, unpinTopic } = useTopic();
   const { submitVote } = useVote();
@@ -50,21 +57,46 @@ const Main = () => {
   const rawStatus = searchParams.get('status') || 'all';
   const status: StatusParam = rawStatus in STATUS_MAP ? (rawStatus as StatusParam) : 'all';
   const search = searchParams.get('search') || '';
-  const page = parseInt(searchParams.get('page') || '1', 10);
+  const rawPage = searchParams.get('page');
+  const parsedPage = parsePageParam(rawPage);
+  const page = parsedPage ?? 1;
   const topicsPerPage = 16;
 
   const apiSort = SORT_MAP[sort];
   const apiStatus = STATUS_MAP[status];
 
   const loadTopics = useCallback(async () => {
-    const data = await fetchTopics({
-      offset: (page - 1) * topicsPerPage,
-      limit: topicsPerPage,
-      sort: apiSort,
-      status: apiStatus,
-      category,
-      search,
-    });
+    if (rawPage !== null && parsedPage === null) {
+      const updated = new URLSearchParams(searchParams);
+      updated.set('page', '1');
+      setSearchParams(updated, { replace: true });
+      return;
+    }
+
+    const [count, data] = await Promise.all([
+      countAllTopics(category, search, apiStatus),
+      fetchTopics({
+        offset: (page - 1) * topicsPerPage,
+        limit: topicsPerPage,
+        sort: apiSort,
+        status: apiStatus,
+        category,
+        search,
+      }),
+    ]);
+
+    if (count !== null) {
+      const totalPages = Math.max(1, Math.ceil(count / topicsPerPage));
+      setTotalTopics(count);
+
+      if (page > totalPages) {
+        const updated = new URLSearchParams(searchParams);
+        updated.set('page', String(totalPages));
+        setSearchParams(updated, { replace: true });
+        return;
+      }
+    }
+
     if (data) {
       const withIndex = data.map((t, idx) => ({
         ...t,
@@ -72,14 +104,23 @@ const Main = () => {
       }));
       setTopics(withIndex);
     }
-  }, [fetchTopics, page, apiSort, apiStatus, category, search]);
+  }, [
+    apiSort,
+    apiStatus,
+    category,
+    countAllTopics,
+    fetchTopics,
+    page,
+    parsedPage,
+    rawPage,
+    search,
+    searchParams,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
-    countAllTopics(category, search, apiStatus).then((count) => {
-      setTotalTopics(count || 0);
-    });
     loadTopics();
-  }, [category, search, apiStatus, countAllTopics, loadTopics]);
+  }, [loadTopics]);
 
   const onPageChange = (p: number) => {
     const updated = new URLSearchParams(searchParams);
