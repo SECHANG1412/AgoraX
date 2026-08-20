@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTopic } from '../../hooks/useTopic';
 import Pagination from './layout/Pagination';
@@ -42,6 +42,7 @@ const Main = () => {
   const { confirm } = useConfirm();
   const [topics, setTopics] = useState<MainTopic[]>([]);
   const [totalTopics, setTotalTopics] = useState(0);
+  const latestRequestIdRef = useRef(0);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -66,6 +67,8 @@ const Main = () => {
   const apiStatus = STATUS_MAP[status];
 
   const loadTopics = useCallback(async () => {
+    const requestId = ++latestRequestIdRef.current;
+
     if (rawPage !== null && parsedPage === null) {
       const updated = new URLSearchParams(searchParams);
       updated.set('page', '1');
@@ -84,6 +87,8 @@ const Main = () => {
         search,
       }),
     ]);
+
+    if (requestId !== latestRequestIdRef.current) return;
 
     if (count !== null) {
       const totalPages = Math.max(1, Math.ceil(count / topicsPerPage));
