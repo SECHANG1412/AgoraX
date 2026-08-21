@@ -42,6 +42,6 @@ npm run typecheck
 npm run build
 ```
 
-`npm run test`는 관리자 대시보드의 API 부분 실패 처리와 인증·관리자 경로 접근 제어를 회귀 검증합니다. API 응답은 테스트에서 대역하므로 백엔드나 외부 서비스 연결이 필요하지 않습니다.
+`npm run test`는 인증·관리자 경로 접근 제어, 관리자 대시보드의 API 부분 실패 처리, 토픽 목록의 비동기 요청·페이지네이션, 토픽 생성의 중복 제출 방지, 토픽 상세 조회·투표 흐름을 회귀 검증합니다. API 응답은 테스트에서 대역하므로 백엔드나 외부 서비스 연결이 필요하지 않습니다.
 
-CI에서는 프론트엔드 lint, TypeScript 타입 검사와 production build 가능 여부를 확인합니다.
+CI에서는 Vitest, 프론트엔드 lint, TypeScript 타입 검사와 production build 가능 여부를 확인합니다.
